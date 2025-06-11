@@ -2,58 +2,57 @@
 import MatchDisplay from "../components/MatchDisplay";
 
 const Index = () => {
-  // Mock data - in real app this would come from an API
+  // Basic football data - no fancy mock APIs needed
   const todaysMatch = {
     homeTeam: {
-      name: "England",
-      crest: "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+      name: "MANCHESTER UNITED",
+      crest: "🔴"
     },
     awayTeam: {
-      name: "Spain",
-      crest: "🇪🇸"
+      name: "LIVERPOOL",
+      crest: "🔴"
     },
-    kickoffTime: "20:00",
+    kickoffTime: "17:30",
     channel: {
-      name: "BBC One",
+      name: "SKY SPORTS PREMIER LEAGUE",
       logo: "📺"
     },
-    isLive: true
+    isLive: false
   };
 
-  // For when no major match is on
   const noMatch = null;
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono">
-      {/* Header */}
-      <div className="text-center py-6 px-4 border-b-2 border-white">
-        <h1 className="text-3xl md:text-5xl font-bold tracking-wider mb-1">
-          WHAT CHANNEL IS THE FOOTBALL ON
+    <div className="min-h-screen bg-background text-foreground font-mono">
+      {/* Deliberately amateur header */}
+      <div className="text-center py-4 px-2 hokey-border border-b-0">
+        <h1 className="text-2xl md:text-4xl font-bold tracking-wider mb-2 clunky-text">
+          *** WHAT CHANNEL IS THE FOOTBALL ON ***
         </h1>
-        <div className="text-base md:text-lg text-white bg-black px-4 py-1 inline-block border border-white mt-2">
-          TODAY'S MATCH INFORMATION
+        <div className="text-sm md:text-base bg-primary text-primary-foreground amateur-spacing inline-block hokey-border mt-1">
+          FOOTBALL IS ON HERE:
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
+      {/* Main content - deliberately basic layout */}
+      <div className="px-2 py-4">
         {todaysMatch ? (
           <MatchDisplay match={todaysMatch} />
         ) : (
-          <div className="text-center border-4 border-white bg-black p-8">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">
-              NO MAJOR MATCH SCHEDULED
+          <div className="text-center hokey-border bg-background amateur-spacing mx-2">
+            <h2 className="text-xl md:text-3xl font-bold mb-3 clunky-text">
+              >>> NO FOOTBALL TODAY <<<
             </h2>
-            <div className="text-lg md:text-xl border border-white px-4 py-2 inline-block">
-              ALTERNATIVE: WATCH FILM
+            <div className="text-base md:text-lg hokey-border bg-primary text-primary-foreground amateur-spacing inline-block">
+              WATCH SOMETHING ELSE MATE
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="text-center py-3 text-white text-xs border-t border-white bg-black">
-        UK TIMES • MAJOR MATCHES ONLY • UPDATED DAILY
+      {/* Basic footer */}
+      <div className="text-center py-2 text-foreground text-xs hokey-border border-t-0 bg-background">
+        UK TIMES ONLY - MAJOR MATCHES - UPDATED WHEN I REMEMBER
       </div>
     </div>
   );

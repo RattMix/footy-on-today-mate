@@ -7,16 +7,16 @@ interface TeamCrestProps {
 const TeamCrest = ({ name, crest }: TeamCrestProps) => {
   return (
     <div className="text-center font-mono">
-      {/* Team Crest */}
-      <div className="mb-3">
-        <div className="w-20 h-20 md:w-24 md:h-24 bg-white border-2 border-white flex items-center justify-center mx-auto">
-          <span className="text-3xl md:text-4xl">{crest}</span>
+      {/* Basic team display */}
+      <div className="mb-2">
+        <div className="w-16 h-16 md:w-20 md:h-20 hokey-border bg-primary text-primary-foreground flex items-center justify-center mx-auto amateur-spacing">
+          <span className="text-2xl md:text-3xl">{crest}</span>
         </div>
       </div>
       
-      {/* Team Name */}
-      <div className="border border-white bg-black px-2 py-1 inline-block">
-        <div className="text-sm md:text-lg font-bold uppercase tracking-wider">
+      {/* Team name - no fancy styling */}
+      <div className="hokey-border bg-background amateur-spacing inline-block">
+        <div className="text-xs md:text-sm font-bold clunky-text">
           {name}
         </div>
       </div>
