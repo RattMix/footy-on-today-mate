@@ -25,16 +25,18 @@ interface MatchDisplayProps {
 
 const MatchDisplay = ({ match }: MatchDisplayProps) => {
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto font-mono">
       {/* Teams */}
-      <div className="flex items-center justify-center gap-8 md:gap-16 mb-8">
+      <div className="flex items-center justify-center gap-6 md:gap-12 mb-8">
         <TeamCrest 
           name={match.homeTeam.name} 
           crest={match.homeTeam.crest} 
         />
         
-        <div className="text-4xl md:text-6xl font-black text-gray-400">
-          VS
+        <div className="border-2 border-white bg-black px-4 py-2">
+          <div className="text-lg md:text-2xl font-bold text-white">
+            VS
+          </div>
         </div>
         
         <TeamCrest 
@@ -44,26 +46,26 @@ const MatchDisplay = ({ match }: MatchDisplayProps) => {
       </div>
 
       {/* Match Info */}
-      <div className="text-center space-y-6">
+      <div className="text-center space-y-4">
         {/* Kick-off Time */}
-        <div className="bg-white text-black py-4 px-8 inline-block">
-          <div className="text-sm font-bold uppercase tracking-wide mb-1">
-            {match.isLive ? "LIVE NOW" : "KICK-OFF"}
+        <div className="border-4 border-white bg-white text-black py-3 px-6 inline-block">
+          <div className="text-xs font-bold uppercase tracking-widest mb-1">
+            {match.isLive ? "LIVE NOW" : "KICK OFF"}
           </div>
-          <div className="text-4xl md:text-5xl font-black">
+          <div className="text-3xl md:text-4xl font-bold">
             {match.kickoffTime}
           </div>
         </div>
 
         {/* Channel */}
-        <div className="border-4 border-white inline-block">
-          <div className="bg-white text-black py-6 px-12">
-            <div className="text-sm font-bold uppercase tracking-wide mb-2">
-              WATCH ON
+        <div className="border-4 border-white bg-white text-black inline-block">
+          <div className="py-4 px-8">
+            <div className="text-xs font-bold uppercase tracking-widest mb-2">
+              CHANNEL
             </div>
-            <div className="flex items-center justify-center gap-4">
-              <span className="text-4xl">{match.channel.logo}</span>
-              <span className="text-3xl md:text-4xl font-black">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-2xl">{match.channel.logo}</span>
+              <span className="text-2xl md:text-3xl font-bold">
                 {match.channel.name}
               </span>
             </div>

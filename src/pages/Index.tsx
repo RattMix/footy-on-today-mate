@@ -24,36 +24,36 @@ const Index = () => {
   const noMatch = null;
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-black text-white font-mono">
       {/* Header */}
-      <div className="text-center py-8 px-4">
-        <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-2">
-          WHAT CHANNEL IS THE FOOTBALL ON?
+      <div className="text-center py-6 px-4 border-b-2 border-white">
+        <h1 className="text-3xl md:text-5xl font-bold tracking-wider mb-1">
+          WHAT CHANNEL IS THE FOOTBALL ON
         </h1>
-        <p className="text-xl md:text-2xl text-gray-300 font-medium">
-          What channel the football is on today.
-        </p>
+        <div className="text-base md:text-lg text-white bg-black px-4 py-1 inline-block border border-white mt-2">
+          TODAY'S MATCH INFORMATION
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4">
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
         {todaysMatch ? (
           <MatchDisplay match={todaysMatch} />
         ) : (
-          <div className="text-center">
-            <h2 className="text-3xl md:text-5xl font-black mb-4">
-              NO BIG MATCH TONIGHT
+          <div className="text-center border-4 border-white bg-black p-8">
+            <h2 className="text-2xl md:text-4xl font-bold mb-4">
+              NO MAJOR MATCH SCHEDULED
             </h2>
-            <p className="text-xl md:text-2xl text-gray-300">
-              Maybe watch a film?
-            </p>
+            <div className="text-lg md:text-xl border border-white px-4 py-2 inline-block">
+              ALTERNATIVE: WATCH FILM
+            </div>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="text-center py-4 text-gray-500 text-sm">
-        UK kick-off times • Major matches only
+      <div className="text-center py-3 text-white text-xs border-t border-white bg-black">
+        UK TIMES • MAJOR MATCHES ONLY • UPDATED DAILY
       </div>
     </div>
   );
