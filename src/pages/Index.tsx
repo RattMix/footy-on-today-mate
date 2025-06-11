@@ -1,20 +1,21 @@
+
 import MatchDisplay from "../components/MatchDisplay";
 
 const Index = () => {
-  // Basic football data - now with actual team badges and channel logos
+  // Basic football data - now with working logo URLs
   const todaysMatch = {
     homeTeam: {
       name: "MANCHESTER UNITED",
-      crest: "https://logoeps.com/wp-content/uploads/2013/03/manchester-united-vector-logo.png"
+      crest: "https://logos-world.net/wp-content/uploads/2020/06/Manchester-United-Logo.png"
     },
     awayTeam: {
       name: "LIVERPOOL", 
-      crest: "https://logoeps.com/wp-content/uploads/2014/06/liverpool-vector-logo.png"
+      crest: "https://logos-world.net/wp-content/uploads/2020/06/Liverpool-Logo.png"
     },
     kickoffTime: "17:30",
     channel: {
       name: "SKY SPORTS PREMIER LEAGUE",
-      logo: "https://logos-world.net/wp-content/uploads/2020/08/Sky-Sports-Logo.png"
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Sky_Sports_logo.svg/2560px-Sky_Sports_logo.svg.png"
     },
     isLive: false
   };
