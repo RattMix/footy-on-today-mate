@@ -1,4 +1,3 @@
-
 import MatchDisplay from "../components/MatchDisplay";
 
 const Index = () => {
@@ -15,7 +14,7 @@ const Index = () => {
     kickoffTime: "17:30",
     channel: {
       name: "SKY SPORTS PREMIER LEAGUE",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Sky_Sports_logo.svg/256px-Sky_Sports_logo.svg.png"
+      logo: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/Sky_Sports_logo_2020.svg/256px-Sky_Sports_logo_2020.svg.png"
     },
     isLive: false
   };
