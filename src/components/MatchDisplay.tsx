@@ -65,7 +65,7 @@ const MatchDisplay = ({ match }: MatchDisplayProps) => {
       <div className="text-center">
         <div className="hokey-border bg-primary text-primary-foreground amateur-spacing inline-block">
           <div className="text-xs font-bold clunky-text mb-1">
-            {match.isLive ? ">>> LIVE NOW <<<" : "KICK OFF TIME:"}
+            {match.isLive ? `${'>>>'} LIVE NOW ${'<<<'}` : "KICK OFF TIME:"}
           </div>
           <div className="text-2xl md:text-3xl font-bold clunky-text">
             {match.kickoffTime}

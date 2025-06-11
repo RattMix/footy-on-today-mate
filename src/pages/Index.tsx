@@ -41,7 +41,7 @@ const Index = () => {
         ) : (
           <div className="text-center hokey-border bg-background amateur-spacing mx-2">
             <h2 className="text-xl md:text-3xl font-bold mb-3 clunky-text">
-              >>> NO FOOTBALL TODAY <<<
+              {'>>>'} NO FOOTBALL TODAY {'<<<'}
             </h2>
             <div className="text-base md:text-lg hokey-border bg-primary text-primary-foreground amateur-spacing inline-block">
               WATCH SOMETHING ELSE MATE
