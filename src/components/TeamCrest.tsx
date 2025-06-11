@@ -10,7 +10,11 @@ const TeamCrest = ({ name, crest }: TeamCrestProps) => {
       {/* Basic team display */}
       <div className="mb-2">
         <div className="w-16 h-16 md:w-20 md:h-20 hokey-border bg-primary text-primary-foreground flex items-center justify-center mx-auto amateur-spacing">
-          <span className="text-2xl md:text-3xl">{crest}</span>
+          <img 
+            src={crest} 
+            alt={name}
+            className="w-12 h-12 md:w-16 md:h-16 object-contain"
+          />
         </div>
       </div>
       

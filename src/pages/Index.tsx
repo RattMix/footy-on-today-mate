@@ -1,21 +1,20 @@
-
 import MatchDisplay from "../components/MatchDisplay";
 
 const Index = () => {
-  // Basic football data - no fancy mock APIs needed
+  // Basic football data - now with real logos
   const todaysMatch = {
     homeTeam: {
       name: "MANCHESTER UNITED",
-      crest: "🔴"
+      crest: "https://logos-world.net/wp-content/uploads/2020/06/Manchester-United-Logo.png"
     },
     awayTeam: {
       name: "LIVERPOOL",
-      crest: "🔴"
+      crest: "https://logos-world.net/wp-content/uploads/2020/06/Liverpool-Logo.png"
     },
     kickoffTime: "17:30",
     channel: {
       name: "SKY SPORTS PREMIER LEAGUE",
-      logo: "📺"
+      logo: "https://upload.wikimedia.org/wikipedia/en/thumb/1/11/Sky_Sports_Premier_League_logo.svg/1200px-Sky_Sports_Premier_League_logo.svg.png"
     },
     isLive: false
   };
@@ -50,9 +49,21 @@ const Index = () => {
         )}
       </div>
 
+      {/* Buy me a coffee - keeping it hokey */}
+      <div className="text-center py-2">
+        <a 
+          href="https://buymeacoffee.com/footballchannel" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="hokey-border bg-primary text-primary-foreground amateur-spacing inline-block clunky-text text-xs hover:bg-background hover:text-foreground transition-colors"
+        >
+          *** BUY ME A COFFEE *** (SITE COSTS MONEY)
+        </a>
+      </div>
+
       {/* Basic footer */}
       <div className="text-center py-2 text-foreground text-xs hokey-border border-t-0 bg-background">
-        UK TIMES ONLY - MAJOR MATCHES - UPDATED WHEN I REMEMBER
+        OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES MATE
       </div>
     </div>
   );

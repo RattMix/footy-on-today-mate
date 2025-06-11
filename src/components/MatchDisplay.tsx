@@ -32,7 +32,14 @@ const MatchDisplay = ({ match }: MatchDisplayProps) => {
           <div className="text-xs font-bold clunky-text mb-1">
             *** WATCH ON ***
           </div>
-          <div className="text-2xl md:text-4xl font-bold clunky-text">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <img 
+              src={match.channel.logo} 
+              alt={match.channel.name}
+              className="w-8 h-8 md:w-10 md:h-10 object-contain"
+            />
+          </div>
+          <div className="text-lg md:text-2xl font-bold clunky-text">
             {match.channel.name}
           </div>
         </div>
