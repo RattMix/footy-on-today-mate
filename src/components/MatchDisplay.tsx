@@ -24,6 +24,15 @@ interface MatchDisplayProps {
 }
 
 const MatchDisplay = ({ match }: MatchDisplayProps) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    const parent = target.parentElement;
+    if (parent) {
+      parent.innerHTML = '<div class="text-2xl">📺</div>';
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto font-mono px-2">
       {/* Channel info - most prominent, deliberately clunky */}
@@ -37,6 +46,7 @@ const MatchDisplay = ({ match }: MatchDisplayProps) => {
               src={match.channel.logo} 
               alt={match.channel.name}
               className="w-8 h-8 md:w-10 md:h-10 object-contain"
+              onError={handleImageError}
             />
           </div>
           <div className="text-lg md:text-2xl font-bold clunky-text">

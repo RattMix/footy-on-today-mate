@@ -5,6 +5,15 @@ interface TeamCrestProps {
 }
 
 const TeamCrest = ({ name, crest }: TeamCrestProps) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    const parent = target.parentElement;
+    if (parent) {
+      parent.innerHTML = '<div class="text-2xl">⚽</div>';
+    }
+  };
+
   return (
     <div className="text-center font-mono">
       {/* Basic team display */}
@@ -14,6 +23,7 @@ const TeamCrest = ({ name, crest }: TeamCrestProps) => {
             src={crest} 
             alt={name}
             className="w-12 h-12 md:w-16 md:h-16 object-contain"
+            onError={handleImageError}
           />
         </div>
       </div>
