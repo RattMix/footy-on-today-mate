@@ -1,31 +1,12 @@
+
 import MatchDisplay from "../components/MatchDisplay";
 import LoadingDisplay from "../components/LoadingDisplay";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { useState } from "react";
 import { useFootballData } from "../hooks/useFootballData";
-
-interface Team {
-  name: string;
-  crest: string;
-}
-
-interface Channel {
-  name: string;
-  logo: string;
-}
-
-interface Match {
-  id: string;
-  homeTeam: Team;
-  awayTeam: Team;
-  kickoffTime: string;
-  date: string;
-  channel: Channel;
-  isLive?: boolean;
-}
+import { type Match } from "../services/footballApi";
 
 const Index = () => {
-  // Enhanced matches data with multiple games across different days
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -49,14 +30,11 @@ const Index = () => {
     const matchIndex = allMatches.findIndex(match => match.date === dateString);
     if (matchIndex !== -1) {
       setCurrentMatchIndex(matchIndex);
-    } else {
-      // If no match found for this date, keep current match index
-      // but the display logic will handle showing "no matches" state
     }
   };
 
   // Get matches for the selected date
-  const getMatchesForDate = (date: Date) => {
+  const getMatchesForDate = (date: Date): Match[] => {
     const dateString = date.toISOString().split('T')[0];
     return allMatches.filter(match => match.date === dateString);
   };
@@ -154,7 +132,7 @@ const Index = () => {
     );
   }
 
-  // Main content logic (unchanged from before)
+  // Main content logic
   const currentMatch = allMatches[currentMatchIndex];
   const hasMatchToShow = currentMatch && selectedDateMatches.length > 0;
   const isCurrentMatchOnSelectedDate = currentMatch?.date === selectedDate.toISOString().split('T')[0];
