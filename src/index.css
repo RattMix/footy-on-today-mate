@@ -3,77 +3,76 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Deliberately basic, anti-brand color scheme */
+/* Classic teletext color scheme with black background */
 
 @layer base {
   :root {
-    --background: 120 100% 20%; /* Basic green like #00AA00 */
+    --background: 0 0% 0%; /* Black background like classic teletext */
     --foreground: 0 0% 100%; /* Pure white */
 
-    --card: 120 100% 20%;
+    --card: 0 0% 0%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 120 100% 20%;
+    --popover: 0 0% 0%;
     --popover-foreground: 0 0% 100%;
 
     --primary: 0 0% 100%; /* White for primary elements */
-    --primary-foreground: 120 100% 20%; /* Green text on white */
+    --primary-foreground: 0 0% 0%; /* Black text on white */
 
     --secondary: 0 0% 100%;
-    --secondary-foreground: 120 100% 20%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 120 50% 30%;
+    --muted: 0 0% 20%;
     --muted-foreground: 0 0% 100%;
 
     --accent: 0 0% 100%;
-    --accent-foreground: 120 100% 20%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 100%; /* White borders everywhere */
+    --border: 0 0% 100%;
     --input: 0 0% 100%;
     --ring: 0 0% 100%;
 
-    --radius: 0rem; /* No rounded corners - keep it basic */
+    --radius: 0rem;
 
-    --sidebar-background: 120 100% 20%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 120 100% 20%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 120 100% 20%;
+    --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 0 0% 100%;
     --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
-    /* Same as light mode - we don't care about dark mode sophistication */
-    --background: 120 100% 20%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 100%;
-    --card: 120 100% 20%;
+    --card: 0 0% 0%;
     --card-foreground: 0 0% 100%;
-    --popover: 120 100% 20%;
+    --popover: 0 0% 0%;
     --popover-foreground: 0 0% 100%;
     --primary: 0 0% 100%;
-    --primary-foreground: 120 100% 20%;
+    --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 100%;
-    --secondary-foreground: 120 100% 20%;
-    --muted: 120 50% 30%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 20%;
     --muted-foreground: 0 0% 100%;
     --accent: 0 0% 100%;
-    --accent-foreground: 120 100% 20%;
+    --accent-foreground: 0 0% 0%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 100%;
     --input: 0 0% 100%;
     --ring: 0 0% 100%;
-    --sidebar-background: 120 100% 20%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 120 100% 20%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 120 100% 20%;
+    --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 0 0% 100%;
     --sidebar-ring: 0 0% 100%;
   }
@@ -89,42 +88,46 @@
   }
 }
 
-/* Teletext-inspired utility classes */
+/* Classic teletext color blocks with proper contrast */
 @layer utilities {
   .teletext-block {
-    background: #FFD700;
-    color: #000000;
+    background: #FFD700; /* Bright yellow */
+    color: #000000; /* Black text */
     padding: 1rem 1.5rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 1px;
+    display: inline-block;
   }
   
   .teletext-channel {
-    background: #FF0000;
-    color: #FFFFFF;
+    background: #FF0000; /* Bright red */
+    color: #FFFFFF; /* White text */
     padding: 1.5rem 2rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 2px;
+    display: inline-block;
   }
   
   .teletext-time {
-    background: #0000FF;
-    color: #FFFFFF;
+    background: #0000FF; /* Bright blue */
+    color: #FFFFFF; /* White text */
     padding: 1rem 1.5rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 1px;
+    display: inline-block;
   }
   
   .teletext-teams {
-    background: #00AA00;
-    color: #FFFFFF;
+    background: #00AA00; /* Bright green */
+    color: #FFFFFF; /* White text */
     padding: 0.75rem 1rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 1px;
+    display: inline-block;
   }
   
   .clunky-text {
