@@ -1,5 +1,8 @@
 import MatchDisplay from "../components/MatchDisplay";
+import LoadingDisplay from "../components/LoadingDisplay";
+import ErrorDisplay from "../components/ErrorDisplay";
 import { useState } from "react";
+import { useFootballData } from "../hooks/useFootballData";
 
 interface Team {
   name: string;
@@ -23,105 +26,13 @@ interface Match {
 
 const Index = () => {
   // Enhanced matches data with multiple games across different days
-  const allMatches: Match[] = [
-    {
-      id: "1",
-      homeTeam: {
-        name: "MANCHESTER UNITED",
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Manchester-United-Logo.png"
-      },
-      awayTeam: {
-        name: "LIVERPOOL", 
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Liverpool-Logo.png"
-      },
-      kickoffTime: "17:30",
-      date: "2025-06-12",
-      channel: {
-        name: "SKY SPORTS PREMIER LEAGUE",
-        logo: "https://1000logos.net/wp-content/uploads/2021/05/Sky-Sports-logo.png"
-      },
-      isLive: false
-    },
-    {
-      id: "2",
-      homeTeam: {
-        name: "ARSENAL",
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Arsenal-Logo.png"
-      },
-      awayTeam: {
-        name: "CHELSEA", 
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Chelsea-Logo.png"
-      },
-      kickoffTime: "20:00",
-      date: "2025-06-12",
-      channel: {
-        name: "BT SPORT 1",
-        logo: "https://1000logos.net/wp-content/uploads/2021/05/BT-Sport-logo.png"
-      },
-      isLive: false
-    },
-    {
-      id: "3",
-      homeTeam: {
-        name: "MANCHESTER CITY",
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Manchester-City-Logo.png"
-      },
-      awayTeam: {
-        name: "TOTTENHAM", 
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Tottenham-Logo.png"
-      },
-      kickoffTime: "14:00",
-      date: "2025-06-13",
-      channel: {
-        name: "SKY SPORTS MAIN EVENT",
-        logo: "https://1000logos.net/wp-content/uploads/2021/05/Sky-Sports-logo.png"
-      },
-      isLive: false
-    },
-    {
-      id: "4",
-      homeTeam: {
-        name: "WEST HAM",
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/West-Ham-Logo.png"
-      },
-      awayTeam: {
-        name: "BRIGHTON", 
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Brighton-Logo.png"
-      },
-      kickoffTime: "16:30",
-      date: "2025-06-13",
-      channel: {
-        name: "SKY SPORTS PREMIER LEAGUE",
-        logo: "https://1000logos.net/wp-content/uploads/2021/05/Sky-Sports-logo.png"
-      },
-      isLive: false
-    },
-    {
-      id: "5",
-      homeTeam: {
-        name: "LEICESTER",
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Leicester-Logo.png"
-      },
-      awayTeam: {
-        name: "EVERTON", 
-        crest: "https://logos-world.net/wp-content/uploads/2020/06/Everton-Logo.png"
-      },
-      kickoffTime: "12:30",
-      date: "2025-06-14",
-      channel: {
-        name: "BT SPORT 1",
-        logo: "https://1000logos.net/wp-content/uploads/2021/05/BT-Sport-logo.png"
-      },
-      isLive: false
-    }
-  ];
-
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const currentMatch = allMatches[currentMatchIndex];
+  const { data: allMatches = [], isLoading, error, refetch } = useFootballData(selectedDate);
 
   const handleNextGame = () => {
+    if (allMatches.length === 0) return;
     const nextIndex = (currentMatchIndex + 1) % allMatches.length;
     setCurrentMatchIndex(nextIndex);
     // Update selected date to match the new game's date
@@ -138,9 +49,10 @@ const Index = () => {
     const matchIndex = allMatches.findIndex(match => match.date === dateString);
     if (matchIndex !== -1) {
       setCurrentMatchIndex(matchIndex);
+    } else {
+      // If no match found for this date, keep current match index
+      // but the display logic will handle showing "no matches" state
     }
-    // If no match found for this date, keep current match index but update selected date
-    // This allows users to browse dates even when no matches exist
   };
 
   // Get matches for the selected date
@@ -158,6 +70,7 @@ const Index = () => {
     }
     
     // Check if current match is on the selected date
+    const currentMatch = allMatches[currentMatchIndex];
     const currentMatchDate = currentMatch?.date;
     const selectedDateString = selectedDate.toISOString().split('T')[0];
     
@@ -171,10 +84,79 @@ const Index = () => {
     return `GAME ${currentMatchInDay + 1} OF ${selectedDateMatches.length}`;
   };
 
-  // Check if there's a match to display
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
+        {/* Header */}
+        <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
+          <div className="teletext-block text-base md:text-4xl inline-block py-2 md:py-4">
+            WHAT CHANNEL IS THE FOOTBALL ON
+          </div>
+        </div>
+
+        {/* Loading content */}
+        <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
+          <LoadingDisplay />
+        </div>
+
+        {/* Footer */}
+        <div className="text-center py-2 md:py-4 flex-shrink-0">
+          <a 
+            href="https://buymeacoffee.com/footballchannel" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="teletext-coffee text-sm hover:bg-purple-600 transition-colors inline-block py-2 md:py-2"
+          >
+            BUY ME A COFFEE (SITE COSTS MONEY)
+          </a>
+        </div>
+
+        <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">
+          OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES MATE
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
+        {/* Header */}
+        <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
+          <div className="teletext-block text-base md:text-4xl inline-block py-2 md:py-4">
+            WHAT CHANNEL IS THE FOOTBALL ON
+          </div>
+        </div>
+
+        {/* Error content */}
+        <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
+          <ErrorDisplay error={error as Error} onRetry={() => refetch()} />
+        </div>
+
+        {/* Footer */}
+        <div className="text-center py-2 md:py-4 flex-shrink-0">
+          <a 
+            href="https://buymeacoffee.com/footballchannel" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="teletext-coffee text-sm hover:bg-purple-600 transition-colors inline-block py-2 md:py-2"
+          >
+            BUY ME A COFFEE (SITE COSTS MONEY)
+          </a>
+        </div>
+
+        <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">
+          OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES MATE
+        </div>
+      </div>
+    );
+  }
+
+  // Main content logic (unchanged from before)
+  const currentMatch = allMatches[currentMatchIndex];
   const hasMatchToShow = currentMatch && selectedDateMatches.length > 0;
-  
-  // Check if current match is on the selected date
   const isCurrentMatchOnSelectedDate = currentMatch?.date === selectedDate.toISOString().split('T')[0];
 
   return (
@@ -228,7 +210,8 @@ const Index = () => {
 
                 <button
                   onClick={handleNextGame}
-                  className="teletext-coffee text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0 bg-purple-700 text-yellow-300 hover:bg-purple-600 transition-colors"
+                  disabled={allMatches.length === 0}
+                  className="teletext-coffee text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0 bg-purple-700 text-yellow-300 hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   NEXT GAME →
                 </button>
