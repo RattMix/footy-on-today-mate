@@ -1,4 +1,3 @@
-
 import MatchDisplay from "../components/MatchDisplay";
 
 const Index = () => {
@@ -24,46 +23,43 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono">
-      {/* Deliberately amateur header */}
-      <div className="text-center py-4 px-2 hokey-border border-b-0">
-        <h1 className="text-2xl md:text-4xl font-bold tracking-wider mb-2 clunky-text">
-          *** WHAT CHANNEL IS THE FOOTBALL ON ***
-        </h1>
-        <div className="text-sm md:text-base bg-primary text-primary-foreground amateur-spacing inline-block hokey-border mt-1">
-          FOOTBALL IS ON HERE:
+      {/* Simple teletext-style header */}
+      <div className="text-center py-6 px-2">
+        <div className="teletext-block text-2xl md:text-4xl inline-block">
+          WHAT CHANNEL IS THE FOOTBALL ON
         </div>
       </div>
 
-      {/* Main content - deliberately basic layout */}
+      {/* Main content - clean teletext layout */}
       <div className="px-2 py-4">
         {todaysMatch ? (
           <MatchDisplay match={todaysMatch} />
         ) : (
-          <div className="text-center hokey-border bg-background amateur-spacing mx-2">
-            <h2 className="text-xl md:text-3xl font-bold mb-3 clunky-text">
-              {'>>>'} NO FOOTBALL TODAY {'<<<'}
-            </h2>
-            <div className="text-base md:text-lg hokey-border bg-primary text-primary-foreground amateur-spacing inline-block">
+          <div className="text-center mx-2">
+            <div className="teletext-channel text-xl md:text-3xl mb-4">
+              NO FOOTBALL TODAY
+            </div>
+            <div className="teletext-block text-base md:text-lg">
               WATCH SOMETHING ELSE MATE
             </div>
           </div>
         )}
       </div>
 
-      {/* Buy me a coffee - keeping it hokey */}
-      <div className="text-center py-2">
+      {/* Buy me a coffee - teletext style */}
+      <div className="text-center py-4">
         <a 
           href="https://buymeacoffee.com/footballchannel" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="hokey-border bg-primary text-primary-foreground amateur-spacing inline-block clunky-text text-xs hover:bg-background hover:text-foreground transition-colors"
+          className="teletext-time text-xs hover:bg-yellow-600 transition-colors inline-block"
         >
-          *** BUY ME A COFFEE *** (SITE COSTS MONEY)
+          BUY ME A COFFEE (SITE COSTS MONEY)
         </a>
       </div>
 
-      {/* Basic footer */}
-      <div className="text-center py-2 text-foreground text-xs hokey-border border-t-0 bg-background">
+      {/* Simple footer */}
+      <div className="text-center py-2 text-foreground text-xs bg-background">
         OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES MATE
       </div>
     </div>

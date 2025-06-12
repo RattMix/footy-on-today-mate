@@ -89,14 +89,42 @@
   }
 }
 
-/* Anti-brand utility classes */
+/* Teletext-inspired utility classes */
 @layer utilities {
-  .hokey-border {
-    border: 3px solid white;
+  .teletext-block {
+    background: #FFD700;
+    color: #000000;
+    padding: 1rem 1.5rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
   }
   
-  .amateur-spacing {
+  .teletext-channel {
+    background: #FF0000;
+    color: #FFFFFF;
+    padding: 1.5rem 2rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+  
+  .teletext-time {
+    background: #0000FF;
+    color: #FFFFFF;
+    padding: 1rem 1.5rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  
+  .teletext-teams {
+    background: #00AA00;
+    color: #FFFFFF;
     padding: 0.75rem 1rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
   }
   
   .clunky-text {

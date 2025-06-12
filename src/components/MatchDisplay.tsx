@@ -34,59 +34,63 @@ const MatchDisplay = ({ match }: MatchDisplayProps) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto font-mono px-2">
-      {/* Channel info - most prominent, deliberately clunky */}
-      <div className="text-center mb-6">
-        <div className="hokey-border bg-primary text-primary-foreground amateur-spacing inline-block mb-2">
-          <div className="text-xs font-bold clunky-text mb-1">
-            *** WATCH ON ***
-          </div>
-          <div className="flex items-center justify-center gap-2 mb-2">
+    <div className="max-w-4xl mx-auto font-mono px-2 space-y-6">
+      {/* Channel - the star of the show */}
+      <div className="text-center">
+        <div className="teletext-channel text-2xl md:text-4xl">
+          <div className="flex items-center justify-center gap-3 mb-2">
             <img 
               src={match.channel.logo} 
               alt={match.channel.name}
-              className="w-8 h-8 md:w-10 md:h-10 object-contain"
+              className="w-12 h-12 md:w-16 md:h-16 object-contain"
               onError={handleImageError}
             />
-          </div>
-          <div className="text-lg md:text-2xl font-bold clunky-text">
-            {match.channel.name}
+            <span>{match.channel.name}</span>
           </div>
         </div>
       </div>
 
-      {/* Teams - basic table-like layout */}
-      <div className="text-center mb-6">
-        <div className="hokey-border bg-background amateur-spacing inline-block">
-          <div className="flex items-center justify-center gap-4 md:gap-8">
-            <TeamCrest 
-              name={match.homeTeam.name} 
-              crest={match.homeTeam.crest} 
-            />
-            
-            <div className="hokey-border bg-primary text-primary-foreground amateur-spacing">
-              <div className="text-lg md:text-2xl font-bold clunky-text">
-                VS
-              </div>
-            </div>
-            
-            <TeamCrest 
-              name={match.awayTeam.name} 
-              crest={match.awayTeam.crest} 
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Kick-off time - basic and functional */}
+      {/* Teams - simple one line */}
       <div className="text-center">
-        <div className="hokey-border bg-primary text-primary-foreground amateur-spacing inline-block">
-          <div className="text-xs font-bold clunky-text mb-1">
-            {match.isLive ? `${'>>>'} LIVE NOW ${'<<<'}` : "KICK OFF TIME:"}
+        <div className="teletext-teams text-lg md:text-2xl">
+          <div className="flex items-center justify-center gap-4">
+            <img 
+              src={match.homeTeam.crest} 
+              alt={match.homeTeam.name}
+              className="w-8 h-8 md:w-10 md:h-10 object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = '<div class="text-lg">⚽</div>';
+                }
+              }}
+            />
+            <span>{match.homeTeam.name}</span>
+            <span className="mx-2">VS</span>
+            <span>{match.awayTeam.name}</span>
+            <img 
+              src={match.awayTeam.crest} 
+              alt={match.awayTeam.name}
+              className="w-8 h-8 md:w-10 md:h-10 object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = '<div class="text-lg">⚽</div>';
+                }
+              }}
+            />
           </div>
-          <div className="text-2xl md:text-3xl font-bold clunky-text">
-            {match.kickoffTime}
-          </div>
+        </div>
+      </div>
+
+      {/* Kick-off time - clean and minimal */}
+      <div className="text-center">
+        <div className="teletext-time text-xl md:text-2xl">
+          {match.isLive ? "LIVE NOW" : `KICK OFF: ${match.kickoffTime}`}
         </div>
       </div>
     </div>
