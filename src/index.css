@@ -88,46 +88,54 @@
   }
 }
 
-/* Classic teletext color blocks with proper contrast */
+/* Classic BBC Ceefax inspired color blocks with better contrast */
 @layer utilities {
   .teletext-block {
-    background: #FFD700; /* Bright yellow */
-    color: #000000; /* Black text */
+    background: #1E3A8A; /* Deep blue */
+    color: #FDE047; /* Bright yellow text */
     padding: 1rem 1.5rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 1px;
-    display: inline-block;
+    display: block;
+    text-align: center;
+    margin: 0.5rem 0;
   }
   
   .teletext-channel {
-    background: #FF0000; /* Bright red */
+    background: #1E40AF; /* Slightly lighter blue */
     color: #FFFFFF; /* White text */
     padding: 1.5rem 2rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 2px;
-    display: inline-block;
+    display: block;
+    text-align: center;
+    margin: 0.5rem 0;
   }
   
   .teletext-time {
-    background: #0000FF; /* Bright blue */
+    background: #059669; /* Teal green */
     color: #FFFFFF; /* White text */
     padding: 1rem 1.5rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 1px;
-    display: inline-block;
+    display: block;
+    text-align: center;
+    margin: 0.5rem 0;
   }
   
   .teletext-teams {
-    background: #00AA00; /* Bright green */
-    color: #FFFFFF; /* White text */
+    background: #7C2D12; /* Dark orange/brown */
+    color: #FDE047; /* Yellow text */
     padding: 0.75rem 1rem;
     font-family: 'Courier New', monospace;
     font-weight: bold;
     letter-spacing: 1px;
-    display: inline-block;
+    display: block;
+    text-align: center;
+    margin: 0.5rem 0;
   }
   
   .clunky-text {
