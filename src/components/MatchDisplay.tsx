@@ -23,19 +23,19 @@ interface MatchDisplayProps {
 
 const MatchDisplay = ({ match }: MatchDisplayProps) => {
   return (
-    <div className="max-w-4xl mx-auto font-mono px-2 space-y-2 md:space-y-4">
+    <div className="w-full max-w-4xl mx-auto font-mono px-1 md:px-2 space-y-1 md:space-y-4">
       {/* Channel - the star of the show */}
-      <div className="teletext-channel text-lg md:text-4xl py-2 md:py-4">
+      <div className="teletext-channel text-sm md:text-4xl py-1 md:py-4">
         📺 {match.channel.name}
       </div>
 
       {/* Teams - simple block */}
-      <div className="teletext-teams text-sm md:text-2xl py-1 md:py-3">
+      <div className="teletext-teams text-xs md:text-2xl py-1 md:py-3">
         ⚽ {match.homeTeam.name} VS {match.awayTeam.name} ⚽
       </div>
 
       {/* Kick-off time */}
-      <div className="teletext-time text-base md:text-2xl py-1 md:py-3">
+      <div className="teletext-time text-sm md:text-2xl py-1 md:py-3">
         {match.isLive ? "🔴 LIVE NOW" : `⏰ KICK OFF: ${match.kickoffTime}`}
       </div>
     </div>
