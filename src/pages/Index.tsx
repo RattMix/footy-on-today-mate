@@ -1,4 +1,3 @@
-
 import MatchDisplay from "../components/MatchDisplay";
 import { useState } from "react";
 
@@ -78,6 +77,42 @@ const Index = () => {
         logo: "https://1000logos.net/wp-content/uploads/2021/05/Sky-Sports-logo.png"
       },
       isLive: false
+    },
+    {
+      id: "4",
+      homeTeam: {
+        name: "WEST HAM",
+        crest: "https://logos-world.net/wp-content/uploads/2020/06/West-Ham-Logo.png"
+      },
+      awayTeam: {
+        name: "BRIGHTON", 
+        crest: "https://logos-world.net/wp-content/uploads/2020/06/Brighton-Logo.png"
+      },
+      kickoffTime: "16:30",
+      date: "2025-06-13",
+      channel: {
+        name: "SKY SPORTS PREMIER LEAGUE",
+        logo: "https://1000logos.net/wp-content/uploads/2021/05/Sky-Sports-logo.png"
+      },
+      isLive: false
+    },
+    {
+      id: "5",
+      homeTeam: {
+        name: "LEICESTER",
+        crest: "https://logos-world.net/wp-content/uploads/2020/06/Leicester-Logo.png"
+      },
+      awayTeam: {
+        name: "EVERTON", 
+        crest: "https://logos-world.net/wp-content/uploads/2020/06/Everton-Logo.png"
+      },
+      kickoffTime: "12:30",
+      date: "2025-06-14",
+      channel: {
+        name: "BT SPORT 1",
+        logo: "https://1000logos.net/wp-content/uploads/2021/05/BT-Sport-logo.png"
+      },
+      isLive: false
     }
   ];
 
@@ -89,6 +124,7 @@ const Index = () => {
   const handleNextGame = () => {
     const nextIndex = (currentMatchIndex + 1) % allMatches.length;
     setCurrentMatchIndex(nextIndex);
+    // Update selected date to match the new game's date
     setSelectedDate(new Date(allMatches[nextIndex].date));
   };
 
@@ -103,19 +139,43 @@ const Index = () => {
     if (matchIndex !== -1) {
       setCurrentMatchIndex(matchIndex);
     }
+    // If no match found for this date, keep current match index but update selected date
+    // This allows users to browse dates even when no matches exist
   };
 
-  const getTodaysMatchCount = () => {
-    const today = selectedDate.toISOString().split('T')[0];
-    return allMatches.filter(match => match.date === today).length;
+  // Get matches for the selected date
+  const getMatchesForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    return allMatches.filter(match => match.date === dateString);
   };
 
-  const getCurrentMatchNumber = () => {
-    const today = selectedDate.toISOString().split('T')[0];
-    const todaysMatches = allMatches.filter(match => match.date === today);
-    const currentMatchInDay = todaysMatches.findIndex(match => match.id === currentMatch?.id);
-    return currentMatchInDay + 1;
+  const selectedDateMatches = getMatchesForDate(selectedDate);
+  
+  // Get match counter - only show if there are matches on the selected date
+  const getMatchCounter = () => {
+    if (selectedDateMatches.length === 0) {
+      return "";
+    }
+    
+    // Check if current match is on the selected date
+    const currentMatchDate = currentMatch?.date;
+    const selectedDateString = selectedDate.toISOString().split('T')[0];
+    
+    if (currentMatchDate !== selectedDateString) {
+      // Current match is not on selected date, show total for selected date
+      return `${selectedDateMatches.length} MATCH${selectedDateMatches.length !== 1 ? 'ES' : ''} TODAY`;
+    }
+    
+    // Current match is on selected date, show position
+    const currentMatchInDay = selectedDateMatches.findIndex(match => match.id === currentMatch?.id);
+    return `GAME ${currentMatchInDay + 1} OF ${selectedDateMatches.length}`;
   };
+
+  // Check if there's a match to display
+  const hasMatchToShow = currentMatch && selectedDateMatches.length > 0;
+  
+  // Check if current match is on the selected date
+  const isCurrentMatchOnSelectedDate = currentMatch?.date === selectedDate.toISOString().split('T')[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
@@ -128,21 +188,51 @@ const Index = () => {
 
       {/* Main content - natural flow on mobile, centered on desktop */}
       <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
-        {currentMatch ? (
+        {hasMatchToShow && isCurrentMatchOnSelectedDate ? (
           <MatchDisplay 
             match={currentMatch} 
             onNextGame={handleNextGame}
             onDateChange={handleDateChange}
             selectedDate={selectedDate}
-            matchCounter={`GAME ${getCurrentMatchNumber()} OF ${getTodaysMatchCount()}`}
+            matchCounter={getMatchCounter()}
+          />
+        ) : selectedDateMatches.length > 0 ? (
+          // Show first match of selected date if current match isn't on this date
+          <MatchDisplay 
+            match={selectedDateMatches[0]} 
+            onNextGame={handleNextGame}
+            onDateChange={handleDateChange}
+            selectedDate={selectedDate}
+            matchCounter={getMatchCounter()}
           />
         ) : (
-          <div className="text-center mx-1 md:mx-2">
+          <div className="text-center mx-1 md:mx-2 w-full max-w-4xl">
             <div className="teletext-channel text-lg md:text-3xl mb-2 md:mb-4">
               NO FOOTBALL TODAY
             </div>
-            <div className="teletext-block text-base md:text-lg">
+            <div className="teletext-block text-base md:text-lg mb-4">
               WATCH SOMETHING ELSE MATE
+            </div>
+            
+            {/* Date picker for no-match days */}
+            <div className="w-full max-w-4xl mx-auto font-mono px-1 md:px-2 space-y-2 md:space-y-4">
+              <div className="flex flex-col space-y-2 md:space-y-3">
+                <div className="teletext-date text-sm md:text-xl py-2 md:py-3">
+                  📅 {selectedDate.toLocaleDateString('en-GB', { 
+                    weekday: 'long', 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  }).toUpperCase()}
+                </div>
+
+                <button
+                  onClick={handleNextGame}
+                  className="teletext-coffee text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0 bg-purple-700 text-yellow-300 hover:bg-purple-600 transition-colors"
+                >
+                  NEXT GAME →
+                </button>
+              </div>
             </div>
           </div>
         )}
