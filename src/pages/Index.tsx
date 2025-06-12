@@ -1,3 +1,4 @@
+
 import MatchDisplay from "../components/MatchDisplay";
 
 const Index = () => {
@@ -24,22 +25,22 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground font-mono">
       {/* Simple teletext-style header */}
-      <div className="text-center py-6 px-2">
-        <div className="teletext-block text-2xl md:text-4xl inline-block">
+      <div className="text-center py-2 md:py-6 px-2">
+        <div className="teletext-block text-lg md:text-4xl inline-block py-2 md:py-4">
           WHAT CHANNEL IS THE FOOTBALL ON
         </div>
       </div>
 
       {/* Main content - clean teletext layout */}
-      <div className="px-2 py-4">
+      <div className="px-2 py-1 md:py-4">
         {todaysMatch ? (
           <MatchDisplay match={todaysMatch} />
         ) : (
           <div className="text-center mx-2">
-            <div className="teletext-channel text-xl md:text-3xl mb-4">
+            <div className="teletext-channel text-lg md:text-3xl mb-2 md:mb-4">
               NO FOOTBALL TODAY
             </div>
-            <div className="teletext-block text-base md:text-lg">
+            <div className="teletext-block text-sm md:text-lg">
               WATCH SOMETHING ELSE MATE
             </div>
           </div>
@@ -47,19 +48,19 @@ const Index = () => {
       </div>
 
       {/* Buy me a coffee - teletext style */}
-      <div className="text-center py-4">
+      <div className="text-center py-2 md:py-4">
         <a 
           href="https://buymeacoffee.com/footballchannel" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="teletext-time text-xs hover:bg-yellow-600 transition-colors inline-block"
+          className="teletext-time text-xs hover:bg-yellow-600 transition-colors inline-block py-1 md:py-2"
         >
           BUY ME A COFFEE (SITE COSTS MONEY)
         </a>
       </div>
 
       {/* Simple footer */}
-      <div className="text-center py-2 text-foreground text-xs bg-background">
+      <div className="text-center py-1 md:py-2 text-foreground text-xs bg-background">
         OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES MATE
       </div>
     </div>
