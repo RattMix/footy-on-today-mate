@@ -137,12 +137,14 @@ serve(async (req) => {
   }
 
   try {
+    console.log('get-football-data function started')
+    
     const { dateFrom, dateTo } = await req.json()
     console.log(`Getting football data from ${dateFrom} to ${dateTo}`)
 
     const supabaseClient = createClient(
       'https://bxgsfctuzxjhczioymqx.supabase.co',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     const allMatches: any[] = []
@@ -157,39 +159,33 @@ serve(async (req) => {
       dates.push(d.toISOString().split('T')[0])
     }
 
+    console.log(`Processing ${dates.length} dates and ${competitions.length} competitions`)
+
     // Fetch matches for each date and competition
     for (const date of dates) {
       // Get TV listings for this date
-      const tvResponse = await fetch('https://bxgsfctuzxjhczioymqx.supabase.co/functions/v1/scrape-tv-listings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-        },
-        body: JSON.stringify({ date })
+      const tvResponse = await supabaseClient.functions.invoke('scrape-tv-listings', {
+        body: { date }
       })
 
       let tvListings: any[] = []
-      if (tvResponse.ok) {
-        const tvData = await tvResponse.json()
-        tvListings = tvData.data?.listings || []
+      if (!tvResponse.error && tvResponse.data?.data) {
+        tvListings = tvResponse.data.data.listings || []
+        console.log(`Got ${tvListings.length} TV listings for ${date}`)
+      } else {
+        console.warn(`No TV listings for ${date}:`, tvResponse.error)
       }
 
       // Fetch matches for each competition
       for (const competitionId of competitions) {
         try {
-          const matchResponse = await fetch('https://bxgsfctuzxjhczioymqx.supabase.co/functions/v1/fetch-matches', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-            },
-            body: JSON.stringify({ date, competitionId })
+          const matchResponse = await supabaseClient.functions.invoke('fetch-matches', {
+            body: { date, competitionId }
           })
 
-          if (matchResponse.ok) {
-            const matchData = await matchResponse.json()
-            const matches = matchData.data?.response || []
+          if (!matchResponse.error && matchResponse.data?.data) {
+            const matches = matchResponse.data.data.response || []
+            console.log(`Got ${matches.length} matches for ${date}, competition ${competitionId}`)
 
             for (const match of matches) {
               const homeTeam = match.teams?.home?.name || ''
@@ -226,6 +222,8 @@ serve(async (req) => {
 
               allMatches.push(transformedMatch)
             }
+          } else {
+            console.warn(`Error fetching matches for ${date}, competition ${competitionId}:`, matchResponse.error)
           }
         } catch (error) {
           console.warn(`Error fetching matches for ${date}, competition ${competitionId}:`, error)

@@ -13,9 +13,11 @@ serve(async (req) => {
   }
 
   try {
+    console.log('fetch-matches function started')
+    
     const supabaseClient = createClient(
       'https://bxgsfctuzxjhczioymqx.supabase.co',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         global: {
           headers: { Authorization: req.headers.get('Authorization')! },
@@ -32,9 +34,11 @@ serve(async (req) => {
       .select('match_data, expires_at')
       .eq('date', date)
       .eq('competition_id', competitionId)
-      .single()
+      .maybeSingle()
 
-    if (cachedData && new Date(cachedData.expires_at) > new Date()) {
+    if (cacheError) {
+      console.error('Cache query error:', cacheError)
+    } else if (cachedData && new Date(cachedData.expires_at) > new Date()) {
       console.log('Serving from cache')
       return new Response(
         JSON.stringify({ data: cachedData.match_data, cached: true }),
@@ -45,10 +49,12 @@ serve(async (req) => {
     // Fetch from API-Football
     const apiKey = Deno.env.get('API_FOOTBALL_KEY')
     if (!apiKey) {
+      console.error('API_FOOTBALL_KEY not configured')
       throw new Error('API_FOOTBALL_KEY not configured')
     }
 
-    const apiUrl = `https://v3.football.api-sports.io/fixtures?date=${date}&league=${competitionId}&season=2024`
+    const currentYear = new Date().getFullYear()
+    const apiUrl = `https://v3.football.api-sports.io/fixtures?date=${date}&league=${competitionId}&season=${currentYear}`
     console.log(`Fetching from API: ${apiUrl}`)
 
     const response = await fetch(apiUrl, {
@@ -59,6 +65,9 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
+      console.error(`API request failed: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('API error response:', errorText)
       throw new Error(`API request failed: ${response.status} ${response.statusText}`)
     }
 
@@ -77,6 +86,8 @@ serve(async (req) => {
     if (insertError) {
       console.error('Cache insert error:', insertError)
       // Continue even if caching fails
+    } else {
+      console.log('Successfully cached match data')
     }
 
     return new Response(

@@ -9,7 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      matches_cache: {
+        Row: {
+          competition_id: number
+          created_at: string
+          date: string
+          expires_at: string
+          id: string
+          match_data: Json
+        }
+        Insert: {
+          competition_id: number
+          created_at?: string
+          date: string
+          expires_at?: string
+          id?: string
+          match_data: Json
+        }
+        Update: {
+          competition_id?: number
+          created_at?: string
+          date?: string
+          expires_at?: string
+          id?: string
+          match_data?: Json
+        }
+        Relationships: []
+      }
+      tv_listings_cache: {
+        Row: {
+          created_at: string
+          date: string
+          expires_at: string
+          id: string
+          listings_data: Json
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          expires_at?: string
+          id?: string
+          listings_data: Json
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          expires_at?: string
+          id?: string
+          listings_data?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

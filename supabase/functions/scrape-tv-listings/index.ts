@@ -14,9 +14,11 @@ serve(async (req) => {
   }
 
   try {
+    console.log('scrape-tv-listings function started')
+    
     const supabaseClient = createClient(
       'https://bxgsfctuzxjhczioymqx.supabase.co',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         global: {
           headers: { Authorization: req.headers.get('Authorization')! },
@@ -32,9 +34,11 @@ serve(async (req) => {
       .from('tv_listings_cache')
       .select('listings_data, expires_at')
       .eq('date', date)
-      .single()
+      .maybeSingle()
 
-    if (cachedData && new Date(cachedData.expires_at) > new Date()) {
+    if (cacheError) {
+      console.error('Cache query error:', cacheError)
+    } else if (cachedData && new Date(cachedData.expires_at) > new Date()) {
       console.log('Serving TV listings from cache')
       return new Response(
         JSON.stringify({ data: cachedData.listings_data, cached: true }),
@@ -58,6 +62,7 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
+      console.error(`Scraping failed: ${response.status} ${response.statusText}`)
       throw new Error(`Scraping failed: ${response.status} ${response.statusText}`)
     }
 
@@ -119,6 +124,8 @@ serve(async (req) => {
     if (insertError) {
       console.error('Cache insert error:', insertError)
       // Continue even if caching fails
+    } else {
+      console.log('Successfully cached TV listings')
     }
 
     return new Response(
