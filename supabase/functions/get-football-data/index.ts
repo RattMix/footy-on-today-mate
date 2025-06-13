@@ -83,8 +83,42 @@ function getChannelInfo(channelName: string): { name: string; logo: string } {
   }
 }
 
-async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Promise<any[]> {
-  console.log(`🏆 Fetching Premier League matches for ${date} using scrape-premier-league`)
+async function getMatchesFromCache(date: string, supabaseClient: any): Promise<any[] | null> {
+  console.log(`🔍 Checking cache for date: ${date}`)
+  
+  try {
+    const { data: cacheEntry, error } = await supabaseClient
+      .from('matches_cache')
+      .select('match_data, expires_at')
+      .eq('date', date)
+      .eq('competition_id', COMPETITIONS.PREMIER_LEAGUE)
+      .single()
+
+    if (error) {
+      console.log(`📭 No cache found for ${date}:`, error.message)
+      return null
+    }
+
+    // Check if cache is still valid
+    const expiresAt = new Date(cacheEntry.expires_at)
+    const now = new Date()
+    
+    if (expiresAt <= now) {
+      console.log(`⏰ Cache expired for ${date} (expired at ${expiresAt.toISOString()})`)
+      return null
+    }
+
+    console.log(`✅ Fresh cache found for ${date} with ${(cacheEntry.match_data as any[]).length} matches`)
+    return cacheEntry.match_data as any[]
+
+  } catch (error) {
+    console.warn(`⚠️ Error checking cache for ${date}:`, error)
+    return null
+  }
+}
+
+async function fetchAndCacheMatches(date: string, supabaseClient: any): Promise<any[]> {
+  console.log(`🏆 Fetching and caching Premier League matches for ${date}`)
   
   try {
     const response = await supabaseClient.functions.invoke('scrape-premier-league', {
@@ -106,7 +140,8 @@ async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Pro
     const fixtures = response.data.data.response
     console.log(`✅ Got ${fixtures.length} Premier League fixtures for ${date}`)
     
-    return fixtures.map((fixture: any, index: number) => ({
+    // Transform fixtures to match expected format
+    const transformedMatches = fixtures.map((fixture: any, index: number) => ({
       id: fixture.id || `pl-${date}-${index}`,
       homeTeam: {
         name: fixture.homeTeam.name,
@@ -124,8 +159,29 @@ async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Pro
       tvMatch: null
     }))
 
+    // Cache the results for future use
+    try {
+      await supabaseClient
+        .from('matches_cache')
+        .upsert({
+          date,
+          competition_id: COMPETITIONS.PREMIER_LEAGUE,
+          match_data: transformedMatches,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        }, {
+          onConflict: 'date,competition_id'
+        })
+      
+      console.log(`💾 Cached ${transformedMatches.length} matches for ${date}`)
+    } catch (cacheError) {
+      console.warn(`⚠️ Failed to cache matches for ${date}:`, cacheError)
+      // Continue even if caching fails
+    }
+
+    return transformedMatches
+
   } catch (error) {
-    console.error(`💥 Error fetching Premier League matches for ${date}:`, error)
+    console.error(`💥 Error fetching matches for ${date}:`, error)
     return []
   }
 }
@@ -139,7 +195,6 @@ serve(async (req) => {
   try {
     console.log('🚀 get-football-data function started')
     console.log(`📋 Request method: ${req.method}`)
-    console.log(`📋 Request headers:`, Object.fromEntries(req.headers.entries()))
     
     let requestBody
     try {
@@ -199,12 +254,22 @@ serve(async (req) => {
 
     console.log(`🔄 Processing ${dates.length} dates`)
 
-    // Only fetch Premier League matches for now
+    // Process each date - check cache first, then scrape if needed
     for (const date of dates) {
       console.log(`📆 Processing date: ${date}`)
 
       try {
-        const matches = await fetchPremierLeagueMatches(date, supabaseClient)
+        // First, try to get matches from cache
+        let matches = await getMatchesFromCache(date, supabaseClient)
+        
+        // If no cache or cache expired, fetch and cache new data
+        if (matches === null) {
+          console.log(`🔄 Cache miss for ${date}, fetching fresh data`)
+          matches = await fetchAndCacheMatches(date, supabaseClient)
+        } else {
+          console.log(`⚡ Cache hit for ${date}, serving ${matches.length} matches instantly`)
+        }
+        
         allMatches.push(...matches)
         
         if (matches.length > 0) {
@@ -214,7 +279,7 @@ serve(async (req) => {
         }
 
       } catch (error) {
-        console.warn(`⚠️ Error fetching matches for ${date}:`, error)
+        console.warn(`⚠️ Error processing matches for ${date}:`, error)
       }
     }
 
