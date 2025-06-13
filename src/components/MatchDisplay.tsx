@@ -101,6 +101,16 @@ const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCoun
         >
           NEXT GAME <ChevronRight className="ml-2 h-4 w-4 md:h-6 md:w-6" />
         </Button>
+
+        {/* Buy Me A Coffee - placed right after Next Game button */}
+        <a 
+          href="https://buymeacoffee.com/footballchannel" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="teletext-footer text-sm md:text-xl py-2 md:py-3 hover:bg-red-600 transition-colors inline-block w-full text-center font-mono font-bold letter-spacing-1"
+        >
+          BUY ME A COFFEE (SITE COSTS MONEY)
+        </a>
       </div>
     </div>
   );
