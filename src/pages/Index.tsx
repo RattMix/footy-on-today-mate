@@ -84,7 +84,7 @@ const Index = () => {
   if (isLoading) {
     return <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
         <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
-          <div className="teletext-block text-base md:text-4xl inline-block py-2 md:py-4">
+          <div className="teletext-header text-base md:text-4xl inline-block py-2 md:py-4">
             WHAT CHANNEL IS THE FOOTBALL ON
           </div>
         </div>
@@ -94,7 +94,7 @@ const Index = () => {
         </div>
 
         <div className="text-center py-2 md:py-4 flex-shrink-0">
-          <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-coffee text-sm hover:bg-purple-600 transition-colors inline-block py-2 md:py-2">
+          <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
             BUY ME A COFFEE (SITE COSTS MONEY)
           </a>
         </div>
@@ -109,7 +109,7 @@ const Index = () => {
   if (error) {
     return <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
         <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
-          <div className="teletext-block text-base md:text-4xl inline-block py-2 md:py-4">
+          <div className="teletext-header text-base md:text-4xl inline-block py-2 md:py-4">
             WHAT CHANNEL IS THE FOOTBALL ON
           </div>
         </div>
@@ -119,7 +119,7 @@ const Index = () => {
         </div>
 
         <div className="text-center py-2 md:py-4 flex-shrink-0">
-          <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-coffee text-sm hover:bg-purple-600 transition-colors inline-block py-2 md:py-2">
+          <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
             BUY ME A COFFEE (SITE COSTS MONEY)
           </a>
         </div>
@@ -136,7 +136,7 @@ const Index = () => {
 
   return <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
       <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
-        <div className="teletext-block text-base md:text-4xl inline-block py-2 md:py-4">
+        <div className="teletext-header text-base md:text-4xl inline-block py-2 md:py-4">
           WHAT CHANNEL IS THE FOOTBALL ON
         </div>
       </div>
@@ -152,50 +152,35 @@ const Index = () => {
           />
         ) : (
           <div className="text-center mx-1 md:mx-2 w-full max-w-4xl">
-            <div className="teletext-channel text-lg md:text-3xl mb-2 md:mb-4">
+            <div className="teletext-no-matches text-lg md:text-3xl mb-2 md:mb-4">
               NO FOOTBALL TODAY
             </div>
-            <div className="teletext-block text-base md:text-lg mb-4">
+            <div className="teletext-suggestion text-base md:text-lg mb-4">
               WATCH SOMETHING ELSE MATE
             </div>
             
-            <div className="w-full max-w-4xl mx-auto font-mono px-1 md:px-2 space-y-2 md:space-y-4">
-              <div className="flex flex-col space-y-2 md:space-y-3">
-                <div className="teletext-date text-sm md:text-xl py-2 md:py-3">
-                  📅 {selectedDate.toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric'
-                  }).toUpperCase()}
-                </div>
-
-                {/* Calendar Component - extracted from MatchDisplay for consistency */}
-                <div className="w-full">
-                  <MatchDisplay 
-                    match={{
-                      id: 'no-match',
-                      homeTeam: { name: 'NO', crest: '' },
-                      awayTeam: { name: 'MATCHES', crest: '' },
-                      kickoffTime: '',
-                      date: selectedDate.toISOString().split('T')[0],
-                      channel: { name: 'NO CHANNEL', logo: '' }
-                    }}
-                    onNextGame={handleNextGame} 
-                    onDateChange={handleDateChange} 
-                    selectedDate={selectedDate} 
-                    matchCounter=""
-                    hideMatchInfo={true}
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Use MatchDisplay component but hide the match info */}
+            <MatchDisplay 
+              match={{
+                id: 'no-match',
+                homeTeam: { name: 'NO', crest: '' },
+                awayTeam: { name: 'MATCHES', crest: '' },
+                kickoffTime: '',
+                date: selectedDate.toISOString().split('T')[0],
+                channel: { name: 'NO CHANNEL', logo: '' }
+              }}
+              onNextGame={handleNextGame} 
+              onDateChange={handleDateChange} 
+              selectedDate={selectedDate} 
+              matchCounter=""
+              hideMatchInfo={true}
+            />
           </div>
         )}
       </div>
 
       <div className="text-center py-2 md:py-4 flex-shrink-0">
-        <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-coffee text-sm hover:bg-purple-600 transition-colors inline-block py-2 md:py-2">
+        <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
           BUY ME A COFFEE (SITE COSTS MONEY)
         </a>
       </div>

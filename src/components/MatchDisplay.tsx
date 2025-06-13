@@ -65,8 +65,8 @@ const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCoun
             <Button
               variant="outline"
               className={cn(
-                "teletext-block text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0",
-                "bg-emerald-700 text-yellow-300 hover:bg-emerald-600"
+                "teletext-date text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0",
+                "bg-blue-600 text-yellow-300 hover:bg-blue-500"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4 md:h-6 md:w-6" />
@@ -86,7 +86,7 @@ const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCoun
 
         {/* Match Counter - only show if there's content */}
         {matchCounter && (
-          <div className="teletext-block text-xs md:text-lg py-1 md:py-2">
+          <div className="teletext-info text-xs md:text-lg py-1 md:py-2">
             {matchCounter}
           </div>
         )}
@@ -95,8 +95,8 @@ const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCoun
         <Button
           onClick={onNextGame}
           className={cn(
-            "teletext-coffee text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0",
-            "bg-purple-700 text-yellow-300 hover:bg-purple-600"
+            "teletext-action text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0",
+            "bg-green-600 text-black hover:bg-green-500"
           )}
         >
           NEXT GAME <ChevronRight className="ml-2 h-4 w-4 md:h-6 md:w-6" />
