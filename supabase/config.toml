@@ -1,1 +1,11 @@
+
 project_id = "bxgsfctuzxjhczioymqx"
+
+[functions.fetch-matches]
+verify_jwt = false
+
+[functions.scrape-tv-listings]
+verify_jwt = false
+
+[functions.get-football-data]
+verify_jwt = false
