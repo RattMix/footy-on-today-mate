@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.get-football-data]
 verify_jwt = false
+
+[functions.scrape-premier-league]
+verify_jwt = false
