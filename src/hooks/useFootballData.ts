@@ -23,8 +23,14 @@ export const useFootballData = (selectedDate: Date) => {
     queryKey: ['matches', dateFrom, dateTo],
     queryFn: () => fetchMatchesForDateRange(dateFrom, dateTo),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (replaces deprecated cacheTime)
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2, // Reduced retries to fail faster
+    retryDelay: (attemptIndex) => Math.min(1000 * attemptIndex, 5000), // Faster retry delay
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    // Add timeout behavior
+    meta: {
+      errorMessage: 'Failed to load football data'
+    }
   });
 };

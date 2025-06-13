@@ -26,29 +26,48 @@ export interface Match {
 }
 
 export const fetchMatchesForDateRange = async (dateFrom: string, dateTo: string): Promise<Match[]> => {
-  console.log(`Fetching matches from backend API for ${dateFrom} to ${dateTo}`);
+  console.log(`📡 Fetching matches from backend API for ${dateFrom} to ${dateTo}`);
 
   try {
+    console.log(`🔄 Calling get-football-data function...`);
+    
     const { data, error } = await supabase.functions.invoke('get-football-data', {
       body: { dateFrom, dateTo }
     });
 
+    console.log(`📊 Backend response:`, { data, error });
+
     if (error) {
-      console.error('Supabase function error:', error);
+      console.error('❌ Supabase function error:', error);
       throw new Error(`Backend API error: ${error.message}`);
     }
 
-    if (!data || !data.matches) {
-      console.warn('No matches returned from backend');
+    if (!data) {
+      console.warn('⚠️ No data returned from backend');
       return [];
     }
 
-    console.log(`Backend returned ${data.matches.length} matches`);
-    return data.matches;
+    // Handle both old and new response formats
+    const matches = data.matches || data || [];
+    
+    console.log(`✅ Backend returned ${matches.length} matches`);
+    return matches;
 
   } catch (error) {
-    console.error('Error calling backend API:', error);
-    throw new Error(`Failed to fetch matches: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error('💥 Error calling backend API:', error);
+    
+    // More specific error handling
+    if (error instanceof Error) {
+      if (error.message.includes('TypeError') || error.message.includes('NetworkError')) {
+        throw new Error('Network connection error. Please check your internet connection.');
+      }
+      if (error.message.includes('CORS')) {
+        throw new Error('Service configuration error. Please try again later.');
+      }
+      throw new Error(`Failed to fetch matches: ${error.message}`);
+    }
+    
+    throw new Error('Unknown error occurred while fetching football data');
   }
 };
 

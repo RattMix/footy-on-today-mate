@@ -5,6 +5,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 }
 
 // Competition mapping for major leagues
@@ -76,7 +77,6 @@ function getChannelInfo(channelName: string): { name: string; logo: string } {
     }
   }
   
-  // Default fallback
   return {
     name: channelName.toUpperCase(),
     logo: 'https://via.placeholder.com/100x50?text=TV'
@@ -91,6 +91,8 @@ async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Pro
       body: { date }
     })
 
+    console.log(`📊 Premier League scraper response:`, response)
+
     if (response.error) {
       console.error(`❌ Premier League scraper error:`, response.error)
       return []
@@ -104,7 +106,6 @@ async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Pro
     const fixtures = response.data.data.response
     console.log(`✅ Got ${fixtures.length} Premier League fixtures for ${date}`)
     
-    // Transform Premier League fixtures to match the expected format
     return fixtures.map((fixture: any, index: number) => ({
       id: fixture.id || `pl-${date}-${index}`,
       homeTeam: {
@@ -117,7 +118,7 @@ async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Pro
       },
       kickoffTime: fixture.kickoffTime,
       date: fixture.date,
-      channel: getChannelInfo('Sky Sports Premier League'), // Default channel for Premier League
+      channel: getChannelInfo('Sky Sports Premier League'),
       isLive: fixture.status === 'LIVE',
       competition: 'Premier League',
       tvMatch: null
@@ -129,33 +130,63 @@ async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Pro
   }
 }
 
-async function fetchOtherCompetitionMatches(date: string, competitionId: number, supabaseClient: any): Promise<any[]> {
-  console.log(`⚽ Fetching matches for competition ${competitionId} on ${date} (using fallback)`)
-  
-  // For now, return empty array for other competitions since the API is not working
-  // In the future, this could be expanded to use other scrapers or APIs
-  console.log(`📭 No matches available for competition ${competitionId} (API unavailable)`)
-  return []
-}
-
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     console.log('🚀 get-football-data function started')
+    console.log(`📋 Request method: ${req.method}`)
+    console.log(`📋 Request headers:`, Object.fromEntries(req.headers.entries()))
     
-    const { dateFrom, dateTo } = await req.json()
+    let requestBody
+    try {
+      requestBody = await req.json()
+      console.log(`📋 Request body:`, requestBody)
+    } catch (error) {
+      console.error('❌ Failed to parse request body:', error)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid JSON in request body',
+          matches: [],
+          count: 0,
+          message: '❌ Failed to parse request'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    const { dateFrom, dateTo } = requestBody
     console.log(`📅 Getting football data from ${dateFrom} to ${dateTo}`)
 
-    const supabaseClient = createClient(
-      'https://bxgsfctuzxjhczioymqx.supabase.co',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseUrl = 'https://bxgsfctuzxjhczioymqx.supabase.co'
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseKey) {
+      console.error('❌ SUPABASE_SERVICE_ROLE_KEY not found')
+      return new Response(
+        JSON.stringify({ 
+          error: 'Service configuration error',
+          matches: [],
+          count: 0,
+          message: '❌ Service configuration error'
+        }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey)
+    console.log(`✅ Supabase client created successfully`)
 
     const allMatches: any[] = []
-    const competitions = Object.values(COMPETITIONS)
     
     // Generate date range
     const startDate = new Date(dateFrom)
@@ -166,50 +197,24 @@ serve(async (req) => {
       dates.push(d.toISOString().split('T')[0])
     }
 
-    console.log(`🔄 Processing ${dates.length} dates and ${competitions.length} competitions`)
+    console.log(`🔄 Processing ${dates.length} dates`)
 
-    // Fetch matches for each date and competition
+    // Only fetch Premier League matches for now
     for (const date of dates) {
       console.log(`📆 Processing date: ${date}`)
 
-      // Get TV listings for this date (optional enhancement)
-      let tvListings: any[] = []
       try {
-        const tvResponse = await supabaseClient.functions.invoke('scrape-tv-listings', {
-          body: { date }
-        })
-
-        if (!tvResponse.error && tvResponse.data?.data) {
-          tvListings = tvResponse.data.data.listings || []
-          console.log(`📺 Got ${tvListings.length} TV listings for ${date}`)
+        const matches = await fetchPremierLeagueMatches(date, supabaseClient)
+        allMatches.push(...matches)
+        
+        if (matches.length > 0) {
+          console.log(`✅ Added ${matches.length} matches for ${date}`)
+        } else {
+          console.log(`📭 No matches found for ${date}`)
         }
+
       } catch (error) {
-        console.warn(`⚠️ Could not fetch TV listings for ${date}:`, error)
-      }
-
-      // Fetch matches for each competition
-      for (const competitionId of competitions) {
-        try {
-          let matches: any[] = []
-
-          // Use Premier League scraper for Premier League matches
-          if (competitionId === COMPETITIONS.PREMIER_LEAGUE) {
-            matches = await fetchPremierLeagueMatches(date, supabaseClient)
-          } else {
-            // For other competitions, use fallback (empty for now)
-            matches = await fetchOtherCompetitionMatches(date, competitionId, supabaseClient)
-          }
-
-          // Add matches to the result
-          allMatches.push(...matches)
-          
-          if (matches.length > 0) {
-            console.log(`✅ Added ${matches.length} matches for ${date}, competition ${competitionId}`)
-          }
-
-        } catch (error) {
-          console.warn(`⚠️ Error fetching matches for ${date}, competition ${competitionId}:`, error)
-        }
+        console.warn(`⚠️ Error fetching matches for ${date}:`, error)
       }
     }
 
@@ -226,7 +231,9 @@ serve(async (req) => {
       JSON.stringify({ 
         matches: allMatches, 
         count: allMatches.length,
-        message: `✅ Successfully fetched ${allMatches.length} matches`
+        message: allMatches.length > 0 
+          ? `✅ Successfully fetched ${allMatches.length} matches`
+          : `📭 No matches found for the requested dates`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -235,7 +242,7 @@ serve(async (req) => {
     console.error('💥 Error in get-football-data:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
         matches: [],
         count: 0,
         message: '❌ Failed to fetch football data'
