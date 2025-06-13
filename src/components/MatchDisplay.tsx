@@ -32,27 +32,33 @@ interface MatchDisplayProps {
   onDateChange: (date: Date | undefined) => void;
   selectedDate: Date;
   matchCounter: string;
+  hideMatchInfo?: boolean;
 }
 
-const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCounter }: MatchDisplayProps) => {
+const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCounter, hideMatchInfo = false }: MatchDisplayProps) => {
   return (
     <div className="w-full max-w-4xl mx-auto font-mono px-1 md:px-2 space-y-2 md:space-y-4">
-      {/* Channel - the star of the show */}
-      <div className="teletext-channel text-lg md:text-4xl py-2 md:py-4">
-        📺 {match.channel.name}
-      </div>
+      {/* Show match info only if hideMatchInfo is false */}
+      {!hideMatchInfo && (
+        <>
+          {/* Channel - the star of the show */}
+          <div className="teletext-channel text-lg md:text-4xl py-2 md:py-4">
+            📺 {match.channel.name}
+          </div>
 
-      {/* Teams - simple block */}
-      <div className="teletext-teams text-sm md:text-2xl py-2 md:py-3">
-        ⚽ {match.homeTeam.name} VS {match.awayTeam.name} ⚽
-      </div>
+          {/* Teams - simple block */}
+          <div className="teletext-teams text-sm md:text-2xl py-2 md:py-3">
+            ⚽ {match.homeTeam.name} VS {match.awayTeam.name} ⚽
+          </div>
 
-      {/* Kick-off time */}
-      <div className="teletext-time text-base md:text-2xl py-2 md:py-3">
-        {match.isLive ? "🔴 LIVE NOW" : `⏰ KICK OFF: ${match.kickoffTime}`}
-      </div>
+          {/* Kick-off time */}
+          <div className="teletext-time text-base md:text-2xl py-2 md:py-3">
+            {match.isLive ? "🔴 LIVE NOW" : `⏰ KICK OFF: ${match.kickoffTime}`}
+          </div>
+        </>
+      )}
 
-      {/* Date Picker - teletext styled */}
+      {/* Date Picker and Controls - always visible */}
       <div className="flex flex-col space-y-2 md:space-y-3">
         <Popover>
           <PopoverTrigger asChild>
@@ -78,10 +84,12 @@ const MatchDisplay = ({ match, onNextGame, onDateChange, selectedDate, matchCoun
           </PopoverContent>
         </Popover>
 
-        {/* Match Counter */}
-        <div className="teletext-block text-xs md:text-lg py-1 md:py-2">
-          {matchCounter}
-        </div>
+        {/* Match Counter - only show if there's content */}
+        {matchCounter && (
+          <div className="teletext-block text-xs md:text-lg py-1 md:py-2">
+            {matchCounter}
+          </div>
+        )}
 
         {/* Next Game Button - always visible */}
         <Button

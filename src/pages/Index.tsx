@@ -1,9 +1,11 @@
+
 import MatchDisplay from "../components/MatchDisplay";
 import LoadingDisplay from "../components/LoadingDisplay";
 import ErrorDisplay from "../components/ErrorDisplay";
 import { useState } from "react";
 import { useFootballData } from "../hooks/useFootballData";
 import { type Match } from "../services/footballApi";
+
 const Index = () => {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -13,47 +15,72 @@ const Index = () => {
     error,
     refetch
   } = useFootballData(selectedDate);
+
   console.log(`🎯 Index component state:`, {
     allMatchesCount: allMatches.length,
     isLoading,
     error: error?.message,
-    selectedDate: selectedDate.toISOString().split('T')[0]
+    selectedDate: selectedDate.toISOString().split('T')[0],
+    currentMatchIndex
   });
+
   const handleNextGame = () => {
     if (allMatches.length === 0) return;
     const nextIndex = (currentMatchIndex + 1) % allMatches.length;
     setCurrentMatchIndex(nextIndex);
-    setSelectedDate(new Date(allMatches[nextIndex].date));
-  };
-  const handleDateChange = (date: Date | undefined) => {
-    if (!date) return;
-    setSelectedDate(date);
-    const dateString = date.toISOString().split('T')[0];
-    const matchIndex = allMatches.findIndex(match => match.date === dateString);
-    if (matchIndex !== -1) {
-      setCurrentMatchIndex(matchIndex);
+    
+    // Update selected date to match the new current match
+    const nextMatch = allMatches[nextIndex];
+    if (nextMatch) {
+      setSelectedDate(new Date(nextMatch.date));
     }
   };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (!date) return;
+    
+    console.log(`📅 Date changed to: ${date.toISOString().split('T')[0]}`);
+    setSelectedDate(date);
+    
+    // Find the first match for this date and set it as current
+    const dateString = date.toISOString().split('T')[0];
+    const matchIndex = allMatches.findIndex(match => match.date === dateString);
+    
+    if (matchIndex !== -1) {
+      console.log(`🎯 Setting current match index to: ${matchIndex}`);
+      setCurrentMatchIndex(matchIndex);
+    } else {
+      console.log(`📭 No matches found for selected date, keeping current index`);
+      // Reset to 0 if no matches found for the selected date
+      setCurrentMatchIndex(0);
+    }
+  };
+
   const getMatchesForDate = (date: Date): Match[] => {
     const dateString = date.toISOString().split('T')[0];
     return allMatches.filter(match => match.date === dateString);
   };
+
   const selectedDateMatches = getMatchesForDate(selectedDate);
+
   const getMatchCounter = () => {
     if (selectedDateMatches.length === 0) {
       return "";
     }
+    
     const currentMatch = allMatches[currentMatchIndex];
     const currentMatchDate = currentMatch?.date;
     const selectedDateString = selectedDate.toISOString().split('T')[0];
+    
     if (currentMatchDate !== selectedDateString) {
       return `${selectedDateMatches.length} MATCH${selectedDateMatches.length !== 1 ? 'ES' : ''} TODAY`;
     }
+    
     const currentMatchInDay = selectedDateMatches.findIndex(match => match.id === currentMatch?.id);
     return `GAME ${currentMatchInDay + 1} OF ${selectedDateMatches.length}`;
   };
 
-  // Show loading state only initially, but with timeout protection
+  // Show loading state only initially
   if (isLoading) {
     return <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
         <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
@@ -78,7 +105,7 @@ const Index = () => {
       </div>;
   }
 
-  // Show error state but allow interaction
+  // Show error state but still allow date selection
   if (error) {
     return <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
         <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
@@ -103,10 +130,10 @@ const Index = () => {
       </div>;
   }
 
-  // Main content logic - this should always show even with no matches
+  // Main content - always show the UI even with no matches
   const currentMatch = allMatches[currentMatchIndex];
-  const hasMatchToShow = currentMatch && selectedDateMatches.length > 0;
-  const isCurrentMatchOnSelectedDate = currentMatch?.date === selectedDate.toISOString().split('T')[0];
+  const hasCurrentMatch = currentMatch && allMatches.length > 0;
+
   return <div className="min-h-screen bg-background text-foreground font-mono flex flex-col">
       <div className="text-center py-2 md:py-6 px-1 md:px-2 flex-shrink-0">
         <div className="teletext-block text-base md:text-4xl inline-block py-2 md:py-4">
@@ -115,7 +142,16 @@ const Index = () => {
       </div>
 
       <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
-        {hasMatchToShow && isCurrentMatchOnSelectedDate ? <MatchDisplay match={currentMatch} onNextGame={handleNextGame} onDateChange={handleDateChange} selectedDate={selectedDate} matchCounter={getMatchCounter()} /> : selectedDateMatches.length > 0 ? <MatchDisplay match={selectedDateMatches[0]} onNextGame={handleNextGame} onDateChange={handleDateChange} selectedDate={selectedDate} matchCounter={getMatchCounter()} /> : <div className="text-center mx-1 md:mx-2 w-full max-w-4xl">
+        {hasCurrentMatch ? (
+          <MatchDisplay 
+            match={currentMatch} 
+            onNextGame={handleNextGame} 
+            onDateChange={handleDateChange} 
+            selectedDate={selectedDate} 
+            matchCounter={getMatchCounter()} 
+          />
+        ) : (
+          <div className="text-center mx-1 md:mx-2 w-full max-w-4xl">
             <div className="teletext-channel text-lg md:text-3xl mb-2 md:mb-4">
               NO FOOTBALL TODAY
             </div>
@@ -127,19 +163,35 @@ const Index = () => {
               <div className="flex flex-col space-y-2 md:space-y-3">
                 <div className="teletext-date text-sm md:text-xl py-2 md:py-3">
                   📅 {selectedDate.toLocaleDateString('en-GB', {
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-              }).toUpperCase()}
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                  }).toUpperCase()}
                 </div>
 
-                <button onClick={handleNextGame} disabled={allMatches.length === 0} className="teletext-coffee text-sm md:text-xl py-2 md:py-3 w-full justify-center font-mono font-bold letter-spacing-1 border-0 bg-purple-700 text-yellow-300 hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  {allMatches.length === 0 ? 'NO MATCHES AVAILABLE' : 'NEXT GAME →'}
-                </button>
+                {/* Calendar Component - extracted from MatchDisplay for consistency */}
+                <div className="w-full">
+                  <MatchDisplay 
+                    match={{
+                      id: 'no-match',
+                      homeTeam: { name: 'NO', crest: '' },
+                      awayTeam: { name: 'MATCHES', crest: '' },
+                      kickoffTime: '',
+                      date: selectedDate.toISOString().split('T')[0],
+                      channel: { name: 'NO CHANNEL', logo: '' }
+                    }}
+                    onNextGame={handleNextGame} 
+                    onDateChange={handleDateChange} 
+                    selectedDate={selectedDate} 
+                    matchCounter=""
+                    hideMatchInfo={true}
+                  />
+                </div>
               </div>
             </div>
-          </div>}
+          </div>
+        )}
       </div>
 
       <div className="text-center py-2 md:py-4 flex-shrink-0">
@@ -148,7 +200,10 @@ const Index = () => {
         </a>
       </div>
 
-      <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES </div>
+      <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">
+        OH YOUR TEAM IS NOT ON HERE, BOO HOO - ONLY BIG MATCHES MATE
+      </div>
     </div>;
 };
+
 export default Index;
