@@ -156,7 +156,7 @@ const Index = () => {
               NO FOOTBALL TODAY
             </div>
             <div className="teletext-suggestion text-base md:text-lg mb-4">
-              WATCH SOMETHING ELSE MATE
+              GO OUTSIDE OR SOMETHING, I DON'T KNOW
             </div>
             
             {/* Use MatchDisplay component but hide the match info */}
