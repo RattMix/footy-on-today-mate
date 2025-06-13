@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
@@ -66,54 +67,6 @@ const CHANNEL_MAPPING: Record<string, { name: string; logo: string }> = {
   }
 }
 
-function normalizeTeamName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/fc$|cf$/, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function fuzzyMatch(str1: string, str2: string): number {
-  const norm1 = normalizeTeamName(str1)
-  const norm2 = normalizeTeamName(str2)
-  
-  if (norm1 === norm2) return 1.0
-  if (norm1.includes(norm2) || norm2.includes(norm1)) return 0.8
-  
-  // Simple character similarity
-  const shorter = norm1.length < norm2.length ? norm1 : norm2
-  const longer = norm1.length >= norm2.length ? norm1 : norm2
-  
-  let matches = 0
-  for (const char of shorter) {
-    if (longer.includes(char)) matches++
-  }
-  
-  return matches / longer.length
-}
-
-function matchTVListing(homeTeam: string, awayTeam: string, listings: any[]): any | null {
-  let bestMatch = null
-  let bestScore = 0
-
-  for (const listing of listings) {
-    const teams = listing.teams?.toLowerCase() || ''
-    
-    // Try different team name combinations
-    const homeScore = fuzzyMatch(homeTeam, teams)
-    const awayScore = fuzzyMatch(awayTeam, teams)
-    const combinedScore = Math.max(homeScore, awayScore)
-    
-    if (combinedScore > bestScore && combinedScore > 0.6) {
-      bestScore = combinedScore
-      bestMatch = listing
-    }
-  }
-
-  return bestMatch
-}
-
 function getChannelInfo(channelName: string): { name: string; logo: string } {
   const normalized = channelName.toLowerCase().trim()
   
@@ -130,16 +83,71 @@ function getChannelInfo(channelName: string): { name: string; logo: string } {
   }
 }
 
+async function fetchPremierLeagueMatches(date: string, supabaseClient: any): Promise<any[]> {
+  console.log(`🏆 Fetching Premier League matches for ${date} using scrape-premier-league`)
+  
+  try {
+    const response = await supabaseClient.functions.invoke('scrape-premier-league', {
+      body: { date }
+    })
+
+    if (response.error) {
+      console.error(`❌ Premier League scraper error:`, response.error)
+      return []
+    }
+
+    if (!response.data?.data?.response) {
+      console.warn(`⚠️ No Premier League data returned for ${date}`)
+      return []
+    }
+
+    const fixtures = response.data.data.response
+    console.log(`✅ Got ${fixtures.length} Premier League fixtures for ${date}`)
+    
+    // Transform Premier League fixtures to match the expected format
+    return fixtures.map((fixture: any, index: number) => ({
+      id: fixture.id || `pl-${date}-${index}`,
+      homeTeam: {
+        name: fixture.homeTeam.name,
+        crest: fixture.homeTeam.crest
+      },
+      awayTeam: {
+        name: fixture.awayTeam.name,
+        crest: fixture.awayTeam.crest
+      },
+      kickoffTime: fixture.kickoffTime,
+      date: fixture.date,
+      channel: getChannelInfo('Sky Sports Premier League'), // Default channel for Premier League
+      isLive: fixture.status === 'LIVE',
+      competition: 'Premier League',
+      tvMatch: null
+    }))
+
+  } catch (error) {
+    console.error(`💥 Error fetching Premier League matches for ${date}:`, error)
+    return []
+  }
+}
+
+async function fetchOtherCompetitionMatches(date: string, competitionId: number, supabaseClient: any): Promise<any[]> {
+  console.log(`⚽ Fetching matches for competition ${competitionId} on ${date} (using fallback)`)
+  
+  // For now, return empty array for other competitions since the API is not working
+  // In the future, this could be expanded to use other scrapers or APIs
+  console.log(`📭 No matches available for competition ${competitionId} (API unavailable)`)
+  return []
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    console.log('get-football-data function started')
+    console.log('🚀 get-football-data function started')
     
     const { dateFrom, dateTo } = await req.json()
-    console.log(`Getting football data from ${dateFrom} to ${dateTo}`)
+    console.log(`📅 Getting football data from ${dateFrom} to ${dateTo}`)
 
     const supabaseClient = createClient(
       'https://bxgsfctuzxjhczioymqx.supabase.co',
@@ -158,74 +166,49 @@ serve(async (req) => {
       dates.push(d.toISOString().split('T')[0])
     }
 
-    console.log(`Processing ${dates.length} dates and ${competitions.length} competitions`)
+    console.log(`🔄 Processing ${dates.length} dates and ${competitions.length} competitions`)
 
     // Fetch matches for each date and competition
     for (const date of dates) {
-      // Get TV listings for this date
-      const tvResponse = await supabaseClient.functions.invoke('scrape-tv-listings', {
-        body: { date }
-      })
+      console.log(`📆 Processing date: ${date}`)
 
+      // Get TV listings for this date (optional enhancement)
       let tvListings: any[] = []
-      if (!tvResponse.error && tvResponse.data?.data) {
-        tvListings = tvResponse.data.data.listings || []
-        console.log(`Got ${tvListings.length} TV listings for ${date}`)
-      } else {
-        console.warn(`No TV listings for ${date}:`, tvResponse.error)
+      try {
+        const tvResponse = await supabaseClient.functions.invoke('scrape-tv-listings', {
+          body: { date }
+        })
+
+        if (!tvResponse.error && tvResponse.data?.data) {
+          tvListings = tvResponse.data.data.listings || []
+          console.log(`📺 Got ${tvListings.length} TV listings for ${date}`)
+        }
+      } catch (error) {
+        console.warn(`⚠️ Could not fetch TV listings for ${date}:`, error)
       }
 
       // Fetch matches for each competition
       for (const competitionId of competitions) {
         try {
-          const matchResponse = await supabaseClient.functions.invoke('fetch-matches', {
-            body: { date, competitionId }
-          })
+          let matches: any[] = []
 
-          if (!matchResponse.error && matchResponse.data?.data) {
-            const matches = matchResponse.data.data.response || []
-            console.log(`Got ${matches.length} matches for ${date}, competition ${competitionId}`)
-
-            for (const match of matches) {
-              const homeTeam = match.teams?.home?.name || ''
-              const awayTeam = match.teams?.away?.name || ''
-              
-              // Try to match with TV listings
-              const tvMatch = matchTVListing(homeTeam, awayTeam, tvListings)
-              const channelInfo = tvMatch ? getChannelInfo(tvMatch.channel) : getChannelInfo('Sky Sports Premier League')
-
-              const transformedMatch = {
-                id: match.fixture?.id?.toString() || `${date}-${competitionId}-${Math.random()}`,
-                homeTeam: {
-                  name: homeTeam.toUpperCase(),
-                  crest: match.teams?.home?.logo || 'https://via.placeholder.com/50'
-                },
-                awayTeam: {
-                  name: awayTeam.toUpperCase(),
-                  crest: match.teams?.away?.logo || 'https://via.placeholder.com/50'
-                },
-                kickoffTime: new Date(match.fixture?.date || '').toLocaleTimeString('en-GB', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false
-                }),
-                date: date,
-                channel: channelInfo,
-                isLive: match.fixture?.status?.short === 'LIVE',
-                competition: match.league?.name || 'Unknown',
-                tvMatch: tvMatch ? {
-                  originalChannel: tvMatch.channel,
-                  matchConfidence: 'auto-matched'
-                } : null
-              }
-
-              allMatches.push(transformedMatch)
-            }
+          // Use Premier League scraper for Premier League matches
+          if (competitionId === COMPETITIONS.PREMIER_LEAGUE) {
+            matches = await fetchPremierLeagueMatches(date, supabaseClient)
           } else {
-            console.warn(`Error fetching matches for ${date}, competition ${competitionId}:`, matchResponse.error)
+            // For other competitions, use fallback (empty for now)
+            matches = await fetchOtherCompetitionMatches(date, competitionId, supabaseClient)
           }
+
+          // Add matches to the result
+          allMatches.push(...matches)
+          
+          if (matches.length > 0) {
+            console.log(`✅ Added ${matches.length} matches for ${date}, competition ${competitionId}`)
+          }
+
         } catch (error) {
-          console.warn(`Error fetching matches for ${date}, competition ${competitionId}:`, error)
+          console.warn(`⚠️ Error fetching matches for ${date}, competition ${competitionId}:`, error)
         }
       }
     }
@@ -237,17 +220,26 @@ serve(async (req) => {
       return dateA.getTime() - dateB.getTime()
     })
 
-    console.log(`Returning ${allMatches.length} total matches`)
+    console.log(`🎯 Returning ${allMatches.length} total matches`)
 
     return new Response(
-      JSON.stringify({ matches: allMatches, count: allMatches.length }),
+      JSON.stringify({ 
+        matches: allMatches, 
+        count: allMatches.length,
+        message: `✅ Successfully fetched ${allMatches.length} matches`
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error in get-football-data:', error)
+    console.error('💥 Error in get-football-data:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        matches: [],
+        count: 0,
+        message: '❌ Failed to fetch football data'
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
