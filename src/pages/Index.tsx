@@ -89,14 +89,14 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
-          <LoadingDisplay />
-        </div>
-
         <div className="text-center py-2 md:py-4 flex-shrink-0">
           <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
             BUY ME A COFFEE (SITE COSTS MONEY)
           </a>
+        </div>
+
+        <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
+          <LoadingDisplay />
         </div>
 
         <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">
@@ -114,14 +114,14 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
-          <ErrorDisplay error={error as Error} onRetry={() => refetch()} />
-        </div>
-
         <div className="text-center py-2 md:py-4 flex-shrink-0">
           <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
             BUY ME A COFFEE (SITE COSTS MONEY)
           </a>
+        </div>
+
+        <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
+          <ErrorDisplay error={error as Error} onRetry={() => refetch()} />
         </div>
 
         <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">
@@ -139,6 +139,12 @@ const Index = () => {
         <div className="teletext-header text-base md:text-4xl inline-block py-2 md:py-4">
           WHAT CHANNEL IS THE FOOTBALL ON
         </div>
+      </div>
+
+      <div className="text-center py-2 md:py-4 flex-shrink-0">
+        <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
+          BUY ME A COFFEE (SITE COSTS MONEY)
+        </a>
       </div>
 
       <div className="px-1 md:px-2 py-2 md:py-4 flex-grow md:flex md:items-center md:justify-center">
@@ -177,12 +183,6 @@ const Index = () => {
             />
           </div>
         )}
-      </div>
-
-      <div className="text-center py-2 md:py-4 flex-shrink-0">
-        <a href="https://buymeacoffee.com/footballchannel" target="_blank" rel="noopener noreferrer" className="teletext-footer text-sm hover:bg-red-600 transition-colors inline-block py-2 md:py-2">
-          BUY ME A COFFEE (SITE COSTS MONEY)
-        </a>
       </div>
 
       <div className="text-center py-2 md:py-2 text-foreground text-xs bg-background flex-shrink-0">
