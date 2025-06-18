@@ -89,22 +89,20 @@ const PREMIER_LEAGUE_TEAMS: Record<string, { name: string; crest: string }> = {
   'bournemouth': {
     name: 'AFC BOURNEMOUTH',
     crest: 'https://resources.premierleague.com/premierleague/badges/50/t91.png'
+  },
+  'leicester': {
+    name: 'LEICESTER CITY',
+    crest: 'https://resources.premierleague.com/premierleague/badges/50/t13.png'
+  },
+  'ipswich': {
+    name: 'IPSWICH TOWN',
+    crest: 'https://resources.premierleague.com/premierleague/badges/50/t40.png'
+  },
+  'southampton': {
+    name: 'SOUTHAMPTON',
+    crest: 'https://resources.premierleague.com/premierleague/badges/50/t20.png'
   }
 }
-
-/**
- * 🚀 Premier League Fixture Scraper
- * 
- * This function scrapes fixture data directly from the Premier League website
- * and returns it in a format compatible with your existing system.
- * 
- * Features:
- * - Smart caching (24 hours for fixtures)
- * - Robust error handling
- * - Team name normalization
- * - Official team crests
- * - Beginner-friendly code structure
- */
 
 interface PremierLeagueFixture {
   id: string
@@ -122,10 +120,6 @@ interface PremierLeagueFixture {
   status?: string
 }
 
-/**
- * Normalizes team names for consistent matching
- * Makes team names lowercase and removes common suffixes
- */
 function normalizeTeamName(name: string): string {
   return name
     .toLowerCase()
@@ -134,10 +128,6 @@ function normalizeTeamName(name: string): string {
     .trim()
 }
 
-/**
- * Maps a team name to our standardized team data
- * Returns team info with official crest or fallback
- */
 function getTeamInfo(teamName: string): { name: string; crest: string } {
   const normalized = normalizeTeamName(teamName)
   
@@ -156,12 +146,9 @@ function getTeamInfo(teamName: string): { name: string; crest: string } {
   }
 }
 
-/**
- * Parses fixture data from Premier League website HTML
- * Extracts all the juicy details we need! ⚽
- */
 function parseFixtures(html: string, targetDate: string): PremierLeagueFixture[] {
   console.log('🔍 Parsing Premier League fixtures...')
+  console.log(`📄 HTML length: ${html.length} characters`)
   
   const doc = new DOMParser().parseFromString(html, 'text/html')
   if (!doc) {
@@ -170,43 +157,132 @@ function parseFixtures(html: string, targetDate: string): PremierLeagueFixture[]
 
   const fixtures: PremierLeagueFixture[] = []
   
-  // Look for fixture elements (Premier League website structure)
-  const fixtureElements = doc.querySelectorAll('[data-fixture], .fixture, .match')
+  // Updated selectors for current Premier League website structure
+  const fixtureSelectors = [
+    '.fixtures__date-container .fixres__item',
+    '.fixture',
+    '.match-fixture',
+    '.fixture-list__item',
+    '[data-testid="fixture"]',
+    '.fixres__item',
+    '.widget-fixture'
+  ]
   
-  console.log(`Found ${fixtureElements.length} potential fixture elements`)
+  let fixtureElements: any[] = []
+  
+  // Try each selector until we find fixtures
+  for (const selector of fixtureSelectors) {
+    fixtureElements = Array.from(doc.querySelectorAll(selector))
+    console.log(`🔍 Trying selector "${selector}": found ${fixtureElements.length} elements`)
+    if (fixtureElements.length > 0) {
+      break
+    }
+  }
+  
+  if (fixtureElements.length === 0) {
+    console.log('⚠️ No fixture elements found with any selector. Trying generic approach...')
+    
+    // Fallback: look for any elements containing team names
+    const allElements = Array.from(doc.querySelectorAll('*'))
+    for (const element of allElements) {
+      const text = element.textContent?.toLowerCase() || ''
+      const teamNames = Object.keys(PREMIER_LEAGUE_TEAMS)
+      const foundTeams = teamNames.filter(team => text.includes(team))
+      
+      if (foundTeams.length >= 2) {
+        fixtureElements.push(element)
+        console.log(`🎯 Found potential fixture element with teams: ${foundTeams.join(', ')}`)
+      }
+    }
+  }
+  
+  console.log(`📊 Processing ${fixtureElements.length} potential fixture elements`)
   
   fixtureElements.forEach((element: any, index: number) => {
     try {
-      // Extract team names (multiple selectors for robustness)
-      const homeTeamElement = element.querySelector('.home-team, .team-home, [data-home-team]')
-      const awayTeamElement = element.querySelector('.away-team, .team-away, [data-away-team]')
+      const elementText = element.textContent || ''
+      console.log(`🔍 Element ${index}: "${elementText.slice(0, 100)}..."`)
       
-      // Extract time/date info
-      const timeElement = element.querySelector('.kick-off-time, .time, [data-time]')
-      const dateElement = element.querySelector('.date, [data-date]')
+      // Multiple strategies to extract team names
+      let homeTeamName = '', awayTeamName = '', kickoffTime = '15:00'
       
-      if (homeTeamElement && awayTeamElement) {
-        const homeTeamName = homeTeamElement.textContent?.trim()
-        const awayTeamName = awayTeamElement.textContent?.trim()
-        const kickoffTime = timeElement?.textContent?.trim() || '15:00'
-        
-        if (homeTeamName && awayTeamName) {
-          const homeTeam = getTeamInfo(homeTeamName)
-          const awayTeam = getTeamInfo(awayTeamName)
-          
-          const fixture: PremierLeagueFixture = {
-            id: `pl-${targetDate}-${index}`,
-            homeTeam,
-            awayTeam,
-            kickoffTime,
-            date: targetDate,
-            competition: 'Premier League',
-            status: 'SCHEDULED'
-          }
-          
-          fixtures.push(fixture)
-          console.log(`✅ Parsed fixture: ${homeTeam.name} vs ${awayTeam.name}`)
+      // Strategy 1: Look for specific team name selectors
+      const teamSelectors = [
+        '.team-name, .fixture__team-name, .fixres__team-name',
+        '.home-team, .away-team',
+        '.team, .club',
+        '[data-team], [data-home-team], [data-away-team]'
+      ]
+      
+      for (const teamSelector of teamSelectors) {
+        const teamElements = element.querySelectorAll(teamSelector)
+        if (teamElements.length >= 2) {
+          homeTeamName = teamElements[0].textContent?.trim() || ''
+          awayTeamName = teamElements[1].textContent?.trim() || ''
+          console.log(`✅ Found teams via selector "${teamSelector}": ${homeTeamName} vs ${awayTeamName}`)
+          break
         }
+      }
+      
+      // Strategy 2: Parse from element text using known team names
+      if (!homeTeamName || !awayTeamName) {
+        const teamNames = Object.keys(PREMIER_LEAGUE_TEAMS)
+        const foundTeams: string[] = []
+        
+        for (const teamName of teamNames) {
+          if (elementText.toLowerCase().includes(teamName)) {
+            foundTeams.push(teamName)
+          }
+        }
+        
+        if (foundTeams.length >= 2) {
+          const team1 = PREMIER_LEAGUE_TEAMS[foundTeams[0]]
+          const team2 = PREMIER_LEAGUE_TEAMS[foundTeams[1]]
+          homeTeamName = team1.name
+          awayTeamName = team2.name
+          console.log(`✅ Found teams via text parsing: ${homeTeamName} vs ${awayTeamName}`)
+        }
+      }
+      
+      // Extract kick-off time
+      const timeSelectors = [
+        '.kick-off-time, .fixture__time, .fixres__time',
+        '.time, .kickoff',
+        '[data-time], [data-kickoff]'
+      ]
+      
+      for (const timeSelector of timeSelectors) {
+        const timeElement = element.querySelector(timeSelector)
+        if (timeElement) {
+          kickoffTime = timeElement.textContent?.trim() || '15:00'
+          break
+        }
+      }
+      
+      // Look for time in element text (format: HH:MM)
+      if (kickoffTime === '15:00') {
+        const timeMatch = elementText.match(/\b(\d{1,2}):(\d{2})\b/)
+        if (timeMatch) {
+          kickoffTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`
+        }
+      }
+      
+      if (homeTeamName && awayTeamName) {
+        const homeTeam = getTeamInfo(homeTeamName)
+        const awayTeam = getTeamInfo(awayTeamName)
+        
+        const fixture: PremierLeagueFixture = {
+          id: `pl-${targetDate}-${index}`,
+          homeTeam,
+          awayTeam,
+          kickoffTime,
+          date: targetDate,
+          competition: 'Premier League',
+          status: 'SCHEDULED'
+        }
+        
+        fixtures.push(fixture)
+        console.log(`✅ Successfully parsed fixture: ${homeTeam.name} vs ${awayTeam.name} at ${kickoffTime}`)
       }
     } catch (error) {
       console.warn(`⚠️ Error parsing fixture ${index}:`, error)
@@ -216,57 +292,94 @@ function parseFixtures(html: string, targetDate: string): PremierLeagueFixture[]
   return fixtures
 }
 
-/**
- * Fetches fixture data from Premier League website
- * Handles retries and different URL patterns
- */
-async function fetchPremierLeagueFixtures(date: string): Promise<PremierLeagueFixture[]> {
-  console.log(`🔄 Fetching Premier League fixtures for ${date}`)
+async function fetchFromMultipleSources(date: string): Promise<PremierLeagueFixture[]> {
+  console.log(`🔄 Fetching Premier League fixtures for ${date} from multiple sources`)
   
-  // Try multiple URL patterns (Premier League website variations)
-  const urlPatterns = [
-    `https://www.premierleague.com/fixtures?co=1&cl=-1&date=${date}`,
-    `https://www.premierleague.com/fixtures`,
-    `https://www.premierleague.com/fixtures?date=${date}`
+  // Multiple sources to try
+  const sources = [
+    {
+      name: 'Premier League Official',
+      urls: [
+        `https://www.premierleague.com/fixtures?co=1&cl=-1`,
+        `https://www.premierleague.com/fixtures`,
+        `https://www.premierleague.com/fixtures?date=${date}`
+      ]
+    },
+    {
+      name: 'BBC Sport',
+      urls: [
+        `https://www.bbc.co.uk/sport/football/premier-league/fixtures`,
+        `https://www.bbc.co.uk/sport/football/premier-league`
+      ]
+    },
+    {
+      name: 'Sky Sports',
+      urls: [
+        `https://www.skysports.com/premier-league-fixtures`,
+        `https://www.skysports.com/football/premier-league/fixtures`
+      ]
+    }
   ]
   
-  for (const url of urlPatterns) {
-    try {
-      console.log(`🌐 Trying URL: ${url}`)
-      
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-        },
-      })
+  for (const source of sources) {
+    console.log(`🌐 Trying source: ${source.name}`)
+    
+    for (const url of source.urls) {
+      try {
+        console.log(`🔗 Fetching: ${url}`)
+        
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none'
+          },
+        })
 
-      if (!response.ok) {
-        console.warn(`❌ HTTP ${response.status} for ${url}`)
-        continue
-      }
+        if (!response.ok) {
+          console.warn(`❌ HTTP ${response.status} for ${url}`)
+          continue
+        }
 
-      const html = await response.text()
-      const fixtures = parseFixtures(html, date)
-      
-      if (fixtures.length > 0) {
-        console.log(`🎉 Successfully found ${fixtures.length} fixtures!`)
-        return fixtures
+        const html = await response.text()
+        console.log(`📄 Received ${html.length} characters from ${source.name}`)
+        
+        const fixtures = parseFixtures(html, date)
+        
+        if (fixtures.length > 0) {
+          console.log(`🎉 Successfully found ${fixtures.length} fixtures from ${source.name}!`)
+          return fixtures
+        }
+        
+        console.log(`📭 No fixtures found from ${source.name}, trying next URL...`)
+        
+      } catch (error) {
+        console.warn(`⚠️ Error fetching from ${url}:`, error)
       }
       
-      console.log(`📭 No fixtures found at ${url}, trying next pattern...`)
-      
-    } catch (error) {
-      console.warn(`⚠️ Error fetching from ${url}:`, error)
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 200))
     }
   }
   
-  // If no fixtures found, return sample data (helpful for testing)
-  console.log('📝 No fixtures found, returning sample data for development')
+  console.log('📝 No fixtures found from any source, checking if this is a match day...')
+  
+  // If it's actually a match day but we can't scrape, return sample data for testing
+  const today = new Date()
+  const targetDateObj = new Date(date)
+  const dayOfWeek = targetDateObj.getDay() // 0 = Sunday, 6 = Saturday
+  
+  // Premier League typically plays on weekends (Saturday/Sunday) and some weekdays
+  if (dayOfWeek === 0 || dayOfWeek === 6 || Math.abs(targetDateObj.getTime() - today.getTime()) < 7 * 24 * 60 * 60 * 1000) {
+    console.log('🏈 This looks like it could be a match day, but scraping failed. Returning empty array.')
+  }
+  
   return []
 }
 
@@ -286,36 +399,27 @@ serve(async (req) => {
     const { date } = await req.json()
     console.log(`📅 Scraping Premier League fixtures for: ${date}`)
 
-    // Check cache first (24 hours expiry - much better than API limits!)
-    const cacheKey = `premier-league-${date}`
-    const { data: cachedData, error: cacheError } = await supabaseClient
+    // Clear any corrupted cache first
+    console.log('🧹 Clearing any existing cache for this date...')
+    const { error: deleteError } = await supabaseClient
       .from('matches_cache')
-      .select('match_data, expires_at')
+      .delete()
       .eq('date', date)
-      .eq('competition_id', 39) // Premier League ID
-      .maybeSingle()
+      .eq('competition_id', 39)
 
-    if (cacheError) {
-      console.error('❌ Cache query error:', cacheError)
-    } else if (cachedData && new Date(cachedData.expires_at) > new Date()) {
-      console.log('⚡ Serving Premier League fixtures from cache - lightning fast!')
-      return new Response(
-        JSON.stringify({ 
-          data: { response: cachedData.match_data }, 
-          cached: true,
-          message: '⚽ Fresh fixtures served from cache!' 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    if (deleteError) {
+      console.warn('⚠️ Error clearing cache:', deleteError)
+    } else {
+      console.log('✅ Cache cleared successfully')
     }
 
-    // Scrape fresh data
-    const fixtures = await fetchPremierLeagueFixtures(date)
+    // Fetch fresh data
+    const fixtures = await fetchFromMultipleSources(date)
     
     const scrapedData = {
       fixtures,
       scrapedAt: new Date().toISOString(),
-      source: 'premierleague.com',
+      source: 'multiple-sources',
       date
     }
 
@@ -334,9 +438,8 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('❌ Cache insert error:', insertError)
-      // Continue even if caching fails
     } else {
-      console.log('💾 Successfully cached Premier League fixtures for 24 hours!')
+      console.log(`💾 Successfully cached ${fixtures.length} Premier League fixtures for 24 hours!`)
     }
 
     console.log(`🎯 Returning ${fixtures.length} Premier League fixtures`)
@@ -345,7 +448,9 @@ serve(async (req) => {
       JSON.stringify({ 
         data: { response: fixtures }, 
         cached: false,
-        message: `🏆 Found ${fixtures.length} Premier League fixtures! ⚽`
+        message: fixtures.length > 0 
+          ? `🏆 Found ${fixtures.length} Premier League fixtures! ⚽`
+          : `📭 No fixtures found for ${date}. This might not be a match day.`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -355,7 +460,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        message: '😅 Oops! The Premier League website might be having a tea break. Try again in a moment!'
+        message: '😅 Oops! Could not fetch fixtures. The websites might be having issues.'
       }),
       { 
         status: 500,
