@@ -104,11 +104,30 @@ async function getMatchesFromCache(date: string, supabaseClient: any): Promise<a
     
     if (expiresAt <= now) {
       console.log(`⏰ Cache expired for ${date} (expired at ${expiresAt.toISOString()})`)
+      // Delete expired cache
+      await supabaseClient
+        .from('matches_cache')
+        .delete()
+        .eq('date', date)
+        .eq('competition_id', COMPETITIONS.PREMIER_LEAGUE)
       return null
     }
 
-    console.log(`✅ Fresh cache found for ${date} with ${(cacheEntry.match_data as any[]).length} matches`)
-    return cacheEntry.match_data as any[]
+    const matches = cacheEntry.match_data as any[]
+    
+    // Don't serve empty cache - force refresh
+    if (!matches || matches.length === 0) {
+      console.log(`📭 Empty cache found for ${date}, forcing refresh`)
+      await supabaseClient
+        .from('matches_cache')
+        .delete()
+        .eq('date', date)
+        .eq('competition_id', COMPETITIONS.PREMIER_LEAGUE)
+      return null
+    }
+
+    console.log(`✅ Fresh cache found for ${date} with ${matches.length} matches`)
+    return matches
 
   } catch (error) {
     console.warn(`⚠️ Error checking cache for ${date}:`, error)
@@ -120,7 +139,16 @@ async function fetchAndCacheMatches(date: string, supabaseClient: any): Promise<
   console.log(`🏆 Fetching Premier League matches with channel info for ${date}`)
   
   try {
-    // Primary: Get matches with channel info from Premier League scraper
+    // Clear any existing cache first to ensure fresh data
+    await supabaseClient
+      .from('matches_cache')
+      .delete()
+      .eq('date', date)
+      .eq('competition_id', COMPETITIONS.PREMIER_LEAGUE)
+    
+    console.log(`🗑️ Cleared existing cache for ${date}`)
+
+    // Get matches with channel info from Premier League scraper
     const response = await supabaseClient.functions.invoke('scrape-premier-league', {
       body: { date }
     })
@@ -129,43 +157,44 @@ async function fetchAndCacheMatches(date: string, supabaseClient: any): Promise<
 
     if (response.error) {
       console.error(`❌ Premier League scraper error:`, response.error)
-      return await fetchTVListingsBackup(date, supabaseClient)
+      return []
     }
 
     if (!response.data?.data?.response) {
       console.warn(`⚠️ No Premier League data returned for ${date}`)
-      return await fetchTVListingsBackup(date, supabaseClient)
+      return []
     }
 
     const fixtures = response.data.data.response
     console.log(`✅ Got ${fixtures.length} Premier League fixtures with channel info for ${date}`)
     
-    // If we have fixtures but some are missing channel info, enhance with TV listings
-    const enhancedFixtures = await enhanceWithTVListings(fixtures, date, supabaseClient)
-    
-    // Cache the results
-    try {
-      await supabaseClient
-        .from('matches_cache')
-        .upsert({
-          date,
-          competition_id: COMPETITIONS.PREMIER_LEAGUE,
-          match_data: enhancedFixtures,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        }, {
-          onConflict: 'date,competition_id'
-        })
-      
-      console.log(`💾 Cached ${enhancedFixtures.length} enhanced matches for ${date}`)
-    } catch (cacheError) {
-      console.warn(`⚠️ Failed to cache matches for ${date}:`, cacheError)
+    // Only cache if we have actual data
+    if (fixtures.length > 0) {
+      try {
+        await supabaseClient
+          .from('matches_cache')
+          .upsert({
+            date,
+            competition_id: COMPETITIONS.PREMIER_LEAGUE,
+            match_data: fixtures,
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          }, {
+            onConflict: 'date,competition_id'
+          })
+        
+        console.log(`💾 Cached ${fixtures.length} matches for ${date}`)
+      } catch (cacheError) {
+        console.warn(`⚠️ Failed to cache matches for ${date}:`, cacheError)
+      }
+    } else {
+      console.log(`⚠️ No fixtures found for ${date} - not caching empty results`)
     }
 
-    return enhancedFixtures
+    return fixtures
 
   } catch (error) {
     console.error(`💥 Error fetching matches for ${date}:`, error)
-    return await fetchTVListingsBackup(date, supabaseClient)
+    return []
   }
 }
 
@@ -382,9 +411,8 @@ serve(async (req) => {
           console.log(`⚡ Cache hit for ${date}, serving ${matches.length} matches with channel info`)
         }
         
-        allMatches.push(...matches)
-        
         if (matches.length > 0) {
+          allMatches.push(...matches)
           console.log(`✅ Added ${matches.length} matches with channel info for ${date}`)
         } else {
           console.log(`📭 No matches found for ${date}`)
@@ -409,7 +437,7 @@ serve(async (req) => {
         count: allMatches.length,
         message: allMatches.length > 0 
           ? `✅ Successfully fetched ${allMatches.length} matches with channel info`
-          : `📭 No matches found for the requested dates`
+          : `📭 No matches found for the requested dates. This might be an off-season period or before fixtures are published.`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
