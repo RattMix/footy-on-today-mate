@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
@@ -118,9 +117,10 @@ async function getMatchesFromCache(date: string, supabaseClient: any): Promise<a
 }
 
 async function fetchAndCacheMatches(date: string, supabaseClient: any): Promise<any[]> {
-  console.log(`🏆 Fetching and caching Premier League matches for ${date}`)
+  console.log(`🏆 Fetching Premier League matches with channel info for ${date}`)
   
   try {
+    // Primary: Get matches with channel info from Premier League scraper
     const response = await supabaseClient.functions.invoke('scrape-premier-league', {
       body: { date }
     })
@@ -129,71 +129,187 @@ async function fetchAndCacheMatches(date: string, supabaseClient: any): Promise<
 
     if (response.error) {
       console.error(`❌ Premier League scraper error:`, response.error)
-      return []
+      return await fetchTVListingsBackup(date, supabaseClient)
     }
 
     if (!response.data?.data?.response) {
       console.warn(`⚠️ No Premier League data returned for ${date}`)
-      return []
+      return await fetchTVListingsBackup(date, supabaseClient)
     }
 
     const fixtures = response.data.data.response
-    console.log(`✅ Got ${fixtures.length} Premier League fixtures for ${date}`)
+    console.log(`✅ Got ${fixtures.length} Premier League fixtures with channel info for ${date}`)
     
-    // Transform fixtures to match expected format
-    const transformedMatches = fixtures.map((fixture: any, index: number) => ({
-      id: fixture.id || `pl-${date}-${index}`,
-      homeTeam: {
-        name: fixture.homeTeam.name,
-        crest: fixture.homeTeam.crest
-      },
-      awayTeam: {
-        name: fixture.awayTeam.name,
-        crest: fixture.awayTeam.crest
-      },
-      kickoffTime: fixture.kickoffTime,
-      date: fixture.date,
-      channel: getChannelInfo('Sky Sports Premier League'),
-      isLive: fixture.status === 'LIVE',
-      competition: 'Premier League',
-      tvMatch: null
-    }))
-
-    // Cache the results for future use
+    // If we have fixtures but some are missing channel info, enhance with TV listings
+    const enhancedFixtures = await enhanceWithTVListings(fixtures, date, supabaseClient)
+    
+    // Cache the results
     try {
       await supabaseClient
         .from('matches_cache')
         .upsert({
           date,
           competition_id: COMPETITIONS.PREMIER_LEAGUE,
-          match_data: transformedMatches,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+          match_data: enhancedFixtures,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         }, {
           onConflict: 'date,competition_id'
         })
       
-      console.log(`💾 Cached ${transformedMatches.length} matches for ${date}`)
+      console.log(`💾 Cached ${enhancedFixtures.length} enhanced matches for ${date}`)
     } catch (cacheError) {
       console.warn(`⚠️ Failed to cache matches for ${date}:`, cacheError)
-      // Continue even if caching fails
     }
 
-    return transformedMatches
+    return enhancedFixtures
 
   } catch (error) {
     console.error(`💥 Error fetching matches for ${date}:`, error)
+    return await fetchTVListingsBackup(date, supabaseClient)
+  }
+}
+
+async function fetchTVListingsBackup(date: string, supabaseClient: any): Promise<any[]> {
+  console.log(`🔄 Falling back to TV listings scraper for ${date}`)
+  
+  try {
+    const tvResponse = await supabaseClient.functions.invoke('scrape-tv-listings', {
+      body: { date }
+    })
+
+    if (tvResponse.error || !tvResponse.data?.data?.listings) {
+      console.warn(`⚠️ TV listings backup also failed for ${date}`)
+      return []
+    }
+
+    const listings = tvResponse.data.data.listings
+    console.log(`📺 Got ${listings.length} TV listings for ${date}`)
+    
+    // Convert TV listings to match format
+    const matches = listings
+      .filter((listing: any) => listing.teams && listing.channel)
+      .map((listing: any, index: number) => {
+        const teams = listing.teams.split(' v ')
+        if (teams.length !== 2) return null
+        
+        return {
+          id: `tv-${date}-${index}`,
+          homeTeam: {
+            name: teams[0].trim().toUpperCase(),
+            crest: 'https://via.placeholder.com/50x50?text=PL'
+          },
+          awayTeam: {
+            name: teams[1].trim().toUpperCase(),
+            crest: 'https://via.placeholder.com/50x50?text=PL'
+          },
+          kickoffTime: listing.time || '15:00',
+          date: date,
+          channel: {
+            name: listing.channel.toUpperCase(),
+            logo: 'https://via.placeholder.com/100x50?text=TV'
+          },
+          competition: 'Premier League',
+          isLive: false
+        }
+      })
+      .filter((match: any) => match !== null)
+
+    console.log(`✅ Converted ${matches.length} TV listings to matches`)
+    return matches
+
+  } catch (error) {
+    console.error(`💥 TV listings backup failed for ${date}:`, error)
     return []
   }
 }
 
+async function enhanceWithTVListings(fixtures: any[], date: string, supabaseClient: any): Promise<any[]> {
+  console.log(`🔍 Enhancing ${fixtures.length} fixtures with TV listings data`)
+  
+  try {
+    const tvResponse = await supabaseClient.functions.invoke('scrape-tv-listings', {
+      body: { date }
+    })
+
+    if (tvResponse.error || !tvResponse.data?.data?.listings) {
+      console.log(`📺 No TV listings available for enhancement`)
+      return fixtures
+    }
+
+    const listings = tvResponse.data.data.listings
+    console.log(`📺 Got ${listings.length} TV listings for cross-reference`)
+    
+    const enhancedFixtures = fixtures.map(fixture => {
+      // If fixture already has good channel info, keep it
+      if (fixture.channel && fixture.channel.name && fixture.channel.name !== 'TBC') {
+        return fixture
+      }
+      
+      // Try to match with TV listings
+      const matchingListing = listings.find((listing: any) => {
+        if (!listing.teams || !listing.time) return false
+        
+        const listingTeams = listing.teams.toLowerCase()
+        const homeTeam = fixture.homeTeam.name.toLowerCase()
+        const awayTeam = fixture.awayTeam.name.toLowerCase()
+        
+        // Check if both team names appear in the listing
+        return listingTeams.includes(homeTeam.substring(0, 8)) && 
+               listingTeams.includes(awayTeam.substring(0, 8))
+      })
+      
+      if (matchingListing && matchingListing.channel) {
+        console.log(`🎯 Enhanced ${fixture.homeTeam.name} vs ${fixture.awayTeam.name} with channel: ${matchingListing.channel}`)
+        return {
+          ...fixture,
+          channel: {
+            name: matchingListing.channel.toUpperCase(),
+            logo: getChannelLogo(matchingListing.channel)
+          }
+        }
+      }
+      
+      return fixture
+    })
+    
+    console.log(`✅ Enhanced fixtures with TV listings data`)
+    return enhancedFixtures
+
+  } catch (error) {
+    console.warn(`⚠️ Error enhancing with TV listings:`, error)
+    return fixtures
+  }
+}
+
+function getChannelLogo(channelName: string): string {
+  const channel = channelName.toLowerCase()
+  
+  if (channel.includes('sky')) {
+    return 'https://logos-world.net/wp-content/uploads/2021/08/Sky-Sports-Logo.png'
+  }
+  if (channel.includes('tnt') || channel.includes('bt sport')) {
+    return 'https://logos-world.net/wp-content/uploads/2023/07/TNT-Sports-Logo.png'
+  }
+  if (channel.includes('amazon') || channel.includes('prime')) {
+    return 'https://logos-world.net/wp-content/uploads/2021/03/Amazon-Prime-Video-Logo.png'
+  }
+  if (channel.includes('bbc')) {
+    return 'https://logos-world.net/wp-content/uploads/2020/06/BBC-One-Logo.png'
+  }
+  if (channel.includes('itv')) {
+    return 'https://logos-world.net/wp-content/uploads/2021/03/ITV-Logo.png'
+  }
+  
+  return 'https://via.placeholder.com/100x50?text=TV'
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    console.log('🚀 get-football-data function started')
+    console.log('🚀 Enhanced get-football-data function started')
     console.log(`📋 Request method: ${req.method}`)
     
     let requestBody
@@ -217,7 +333,7 @@ serve(async (req) => {
     }
 
     const { dateFrom, dateTo } = requestBody
-    console.log(`📅 Getting football data from ${dateFrom} to ${dateTo}`)
+    console.log(`📅 Getting enhanced football data from ${dateFrom} to ${dateTo}`)
 
     const supabaseUrl = 'https://bxgsfctuzxjhczioymqx.supabase.co'
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -243,7 +359,6 @@ serve(async (req) => {
 
     const allMatches: any[] = []
     
-    // Generate date range
     const startDate = new Date(dateFrom)
     const endDate = new Date(dateTo)
     const dates: string[] = []
@@ -252,28 +367,25 @@ serve(async (req) => {
       dates.push(d.toISOString().split('T')[0])
     }
 
-    console.log(`🔄 Processing ${dates.length} dates`)
+    console.log(`🔄 Processing ${dates.length} dates for enhanced channel data`)
 
-    // Process each date - check cache first, then scrape if needed
     for (const date of dates) {
       console.log(`📆 Processing date: ${date}`)
 
       try {
-        // First, try to get matches from cache
         let matches = await getMatchesFromCache(date, supabaseClient)
         
-        // If no cache or cache expired, fetch and cache new data
         if (matches === null) {
-          console.log(`🔄 Cache miss for ${date}, fetching fresh data`)
+          console.log(`🔄 Cache miss for ${date}, fetching enhanced data`)
           matches = await fetchAndCacheMatches(date, supabaseClient)
         } else {
-          console.log(`⚡ Cache hit for ${date}, serving ${matches.length} matches instantly`)
+          console.log(`⚡ Cache hit for ${date}, serving ${matches.length} matches with channel info`)
         }
         
         allMatches.push(...matches)
         
         if (matches.length > 0) {
-          console.log(`✅ Added ${matches.length} matches for ${date}`)
+          console.log(`✅ Added ${matches.length} matches with channel info for ${date}`)
         } else {
           console.log(`📭 No matches found for ${date}`)
         }
@@ -283,34 +395,33 @@ serve(async (req) => {
       }
     }
 
-    // Sort matches by date and time
     allMatches.sort((a, b) => {
       const dateA = new Date(`${a.date} ${a.kickoffTime}`)
       const dateB = new Date(`${b.date} ${b.kickoffTime}`)
       return dateA.getTime() - dateB.getTime()
     })
 
-    console.log(`🎯 Returning ${allMatches.length} total matches`)
+    console.log(`🎯 Returning ${allMatches.length} total matches with enhanced channel info`)
 
     return new Response(
       JSON.stringify({ 
         matches: allMatches, 
         count: allMatches.length,
         message: allMatches.length > 0 
-          ? `✅ Successfully fetched ${allMatches.length} matches`
+          ? `✅ Successfully fetched ${allMatches.length} matches with channel info`
           : `📭 No matches found for the requested dates`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('💥 Error in get-football-data:', error)
+    console.error('💥 Error in enhanced get-football-data:', error)
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Unknown error occurred',
         matches: [],
         count: 0,
-        message: '❌ Failed to fetch football data'
+        message: '❌ Failed to fetch enhanced football data'
       }),
       { 
         status: 500,
